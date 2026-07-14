@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌈 นิทานหรรษา — นิทานเล่าเสียงสำหรับเด็ก</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #FFF7E8;
+    --purple: #7C5CE0;
+    --pink: #FF7BAC;
+    --yellow: #FFC93C;
+    --green: #4ECDC4;
+    --orange: #FF9F5A;
+    --text: #4A3B5C;
+  }
+
+  body {
+    font-family: -apple-system, "Sukhumvit Set", "Thonburi", "Noto Sans Thai", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---------- floating background decorations ---------- */
+  .bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .bubble {
+    position: absolute; border-radius: 50%; opacity: .12;
+    animation: floaty 12s ease-in-out infinite alternate;
+  }
+  @keyframes floaty {
+    from { transform: translateY(0) rotate(0deg); }
+    to   { transform: translateY(-46px) rotate(18deg); }
+  }
+
+  .page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* ---------- header ---------- */
+  header { text-align: center; padding: 18px 0 8px; }
+  header h1 {
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    background: linear-gradient(90deg, var(--purple), var(--pink), var(--orange));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    letter-spacing: 1px;
+  }
+  header p { margin-top: 6px; font-size: 1.1rem; color: #8a7ba0; }
+
+  /* ---------- story picker ---------- */
+  .story-grid {
+    display: grid; gap: 22px; margin-top: 26px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  .story-card {
+    background: #fff; border-radius: 28px; overflow: hidden; cursor: pointer;
+    border: 4px solid transparent;
+    box-shadow: 0 8px 24px rgba(124, 92, 224, .14);
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    text-align: center;
+  }
+  .story-card:hover, .story-card:focus-visible {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 16px 34px rgba(124, 92, 224, .25);
+    border-color: var(--yellow);
+    outline: none;
+  }
+  .story-card:active { transform: scale(.97); }
+  .story-card .cover { width: 100%; display: block; }
+  .story-card .info { padding: 16px 14px 20px; }
+  .story-card h2 { font-size: 1.4rem; }
+  .story-card p { color: #9187a5; margin-top: 4px; font-size: .95rem; }
+  .story-card .play-hint {
+    display: inline-block; margin-top: 12px; padding: 8px 22px;
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    color: #fff; border-radius: 999px; font-size: 1rem; font-weight: 600;
+  }
+
+  /* ---------- story reader ---------- */
+  .reader { display: none; }
+  .reader.active { display: block; }
+  .picker.hidden { display: none; }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff; border: 3px solid var(--purple); color: var(--purple);
+    font-family: inherit; font-size: 1.05rem; font-weight: 700;
+    padding: 10px 20px; border-radius: 999px; cursor: pointer;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .back-btn:hover { background: var(--purple); color: #fff; transform: scale(1.05); }
+
+  .reader h2.story-title { text-align: center; font-size: clamp(1.5rem, 4.5vw, 2.2rem); margin: 14px 0 4px; }
+  .scene-counter { text-align: center; color: #9187a5; font-size: 1rem; margin-bottom: 14px; }
+
+  .scene-stage {
+    background: #fff; border-radius: 32px; padding: 18px;
+    box-shadow: 0 10px 30px rgba(124, 92, 224, .16);
+    max-width: 720px; margin: 0 auto;
+  }
+  .scene-art {
+    border-radius: 24px; overflow: hidden; cursor: pointer; position: relative;
+    transition: transform .2s ease;
+  }
+  .scene-art:active { transform: scale(.98); }
+  .scene-art svg { width: 100%; height: auto; display: block; }
+  .scene-art.speaking { animation: gentle-bounce 1s ease-in-out infinite; }
+  @keyframes gentle-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.015); }
+  }
+  .tap-hint {
+    position: absolute; bottom: 12px; right: 14px;
+    background: rgba(255,255,255,.92); border-radius: 999px;
+    padding: 8px 16px; font-size: .95rem; font-weight: 700; color: var(--purple);
+    box-shadow: 0 3px 10px rgba(0,0,0,.12);
+    animation: pulse-hint 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes pulse-hint { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .scene-art.speaking .tap-hint { animation: none; }
+
+  .scene-text {
+    font-size: clamp(1.15rem, 3.4vw, 1.45rem); line-height: 1.95;
+    padding: 18px 10px 6px; text-align: center;
+  }
+  .scene-text .w {
+    border-radius: 8px; padding: 1px 3px; transition: background .12s ease, color .12s ease;
+  }
+  .scene-text .w.on {
+    background: var(--yellow); color: var(--text); font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(255,201,60,.35);
+  }
+
+  /* ---------- controls ---------- */
+  .controls {
+    display: flex; justify-content: center; align-items: center; gap: 14px;
+    margin-top: 20px; flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    font-family: inherit; font-weight: 800; border: none; cursor: pointer;
+    border-radius: 999px; transition: transform .15s ease, filter .15s ease;
+    color: #fff; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .ctrl-btn:hover:not(:disabled) { transform: scale(1.07); filter: brightness(1.06); }
+  .ctrl-btn:active:not(:disabled) { transform: scale(.94); }
+  .ctrl-btn:disabled { opacity: .35; cursor: default; }
+
+  .nav-btn { background: var(--green); font-size: 1.15rem; padding: 14px 22px; box-shadow: 0 6px 0 #35b0a7; }
+  .nav-btn:active:not(:disabled) { box-shadow: 0 2px 0 #35b0a7; }
+  .play-btn {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    font-size: 1.35rem; padding: 18px 34px; box-shadow: 0 7px 0 #b0559a;
+  }
+  .play-btn:active { box-shadow: 0 2px 0 #b0559a; }
+
+  .dots { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+  .dot {
+    width: 16px; height: 16px; border-radius: 50%; background: #E4DAF4;
+    border: none; cursor: pointer; transition: all .2s ease; padding: 0;
+  }
+  .dot.done { background: var(--yellow); }
+  .dot.current { background: var(--purple); transform: scale(1.35); }
+
+  .auto-row { display: flex; justify-content: center; margin-top: 18px; }
+  .auto-toggle {
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+    background: #fff; border-radius: 999px; padding: 10px 20px;
+    box-shadow: 0 4px 14px rgba(124,92,224,.12); font-weight: 700; font-size: 1rem;
+    user-select: none;
+  }
+  .auto-toggle input { width: 22px; height: 22px; accent-color: var(--purple); cursor: pointer; }
+
+  /* ---------- celebration ---------- */
+  .confetti-piece {
+    position: fixed; top: -20px; z-index: 50; pointer-events: none;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+  .the-end {
+    display: none; text-align: center; margin-top: 18px;
+    font-size: 1.5rem; font-weight: 800; color: var(--orange);
+    animation: pop-in .5s ease;
+  }
+  .the-end.show { display: block; }
+  @keyframes pop-in { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .no-voice-note {
+    display: none; text-align: center; background: #FFF0F0; color: #C0392B;
+    border-radius: 16px; padding: 12px 16px; margin: 14px auto 0; max-width: 640px; font-size: .95rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="bubbles" id="bubbles"></div>
+
+<div class="page">
+  <header>
+    <h1>🌈 นิทานหรรษา 🎈</h1>
+    <p>แตะรูปภาพ แล้วฟังพี่ AI เล่านิทานให้ฟังนะจ๊ะ 🎧</p>
+  </header>
+
+  <!-- story picker -->
+  <section class="picker" id="picker">
+    <div class="story-grid" id="storyGrid"></div>
+  </section>
+
+  <!-- story reader -->
+  <section class="reader" id="reader">
+    <button class="back-btn" id="backBtn">⬅️ กลับไปเลือกนิทาน</button>
+    <h2 class="story-title" id="storyTitle"></h2>
+    <div class="scene-counter" id="sceneCounter"></div>
+
+    <div class="scene-stage">
+      <div class="scene-art" id="sceneArt" role="button" tabindex="0" aria-label="แตะเพื่อฟังนิทาน">
+        <div id="sceneSvg"></div>
+        <div class="tap-hint" id="tapHint">👆 แตะเพื่อฟัง</div>
+      </div>
+      <p class="scene-text" id="sceneText"></p>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn nav-btn" id="prevBtn">⬅️ ก่อนหน้า</button>
+      <button class="ctrl-btn play-btn" id="playBtn">▶️ ฟังนิทาน</button>
+      <button class="ctrl-btn nav-btn" id="nextBtn">ถัดไป ➡️</button>
+    </div>
+
+    <div class="dots" id="dots"></div>
+
+    <div class="auto-row">
+      <label class="auto-toggle">
+        <input type="checkbox" id="autoPlay">
+        🪄 เล่าต่อเองทุกฉาก
+      </label>
+    </div>
+
+    <div class="the-end" id="theEnd">🎉 จบแล้วจ้า เก่งมากที่ฟังจนจบ! 🎉</div>
+    <div class="no-voice-note" id="noVoiceNote">
+      เครื่องนี้ยังไม่มีเสียงภาษาไทยจ้า — ลองเปิดใน Safari หรือ Chrome บนมือถือ/แท็บเล็ตดูนะ
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============================================================
+   SVG scene art helpers — cute flat cartoon style
+   ============================================================ */
+let skyId = 0;
+const SKY = (top, bottom) => {
+  const id = `sky-${skyId++}`;
+  return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient></defs>
+  <rect width="800" height="500" fill="url(#${id})"/>`;
+};
+
+const SUN = (x, y) => `<circle cx="${x}" cy="${y}" r="46" fill="#FFD93D"/>
+  <circle cx="${x}" cy="${y}" r="58" fill="#FFD93D" opacity=".3"/>`;
+
+const MOON = (x, y) => `<circle cx="${x}" cy="${y}" r="40" fill="#FFF6D5"/><circle cx="${x+16}" cy="${y-8}" r="34" fill="#39457B"/>`;
+
+const CLOUD = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})" fill="#fff" opacity=".9">
+  <ellipse cx="0" cy="0" rx="46" ry="24"/><ellipse cx="-32" cy="8" rx="30" ry="17"/><ellipse cx="34" cy="8" rx="30" ry="17"/></g>`;
+
+const GROUND = (color) => `<ellipse cx="400" cy="560" rx="560" ry="150" fill="${color}"/>`;
+
+const TREE = (x, y, s = 1, leaf = '#5FBF6E') => `<g transform="translate(${x},${y}) scale(${s})">
+  <rect x="-11" y="0" width="22" height="70" rx="10" fill="#9C6B3F"/>
+  <circle cx="0" cy="-32" r="52" fill="${leaf}"/><circle cx="-38" cy="-6" r="36" fill="${leaf}"/><circle cx="38" cy="-6" r="36" fill="${leaf}"/></g>`;
+
+const FLOWER = (x, y, c = '#FF7BAC') => `<g transform="translate(${x},${y})">
+  <rect x="-2" y="0" width="4" height="22" fill="#5FBF6E"/>
+  <circle cx="0" cy="-4" r="7" fill="${c}"/><circle cx="-8" cy="2" r="7" fill="${c}"/><circle cx="8" cy="2" r="7" fill="${c}"/>
+  <circle cx="0" cy="0" r="5" fill="#FFD93D"/></g>`;
+
+const RABBIT = (x, y, s = 1, extra = '') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="86" rx="46" ry="12" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="-14" cy="-58" rx="12" ry="34" fill="#fff" stroke="#E8D5E0" stroke-width="3"/>
+  <ellipse cx="14" cy="-58" rx="12" ry="34" fill="#fff" stroke="#E8D5E0" stroke-width="3"/>
+  <ellipse cx="-14" cy="-58" rx="6" ry="24" fill="#FFC9DD"/><ellipse cx="14" cy="-58" rx="6" ry="24" fill="#FFC9DD"/>
+  <circle cx="0" cy="0" r="34" fill="#fff" stroke="#E8D5E0" stroke-width="3"/>
+  <ellipse cx="0" cy="52" rx="30" ry="34" fill="#fff" stroke="#E8D5E0" stroke-width="3"/>
+  <circle cx="-12" cy="-6" r="4.5" fill="#4A3B5C"/><circle cx="12" cy="-6" r="4.5" fill="#4A3B5C"/>
+  <ellipse cx="0" cy="6" rx="5" ry="4" fill="#FF7BAC"/>
+  <path d="M -8 14 Q 0 20 8 14" stroke="#4A3B5C" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <circle cx="-22" cy="4" r="6" fill="#FFC9DD" opacity=".7"/><circle cx="22" cy="4" r="6" fill="#FFC9DD" opacity=".7"/>
+  ${extra}</g>`;
+
+const RABBIT_SLEEP = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="46" rx="60" ry="12" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="6" cy="26" rx="52" ry="26" fill="#fff" stroke="#E8D5E0" stroke-width="3"/>
+  <ellipse cx="-46" cy="-26" rx="10" ry="26" fill="#fff" stroke="#E8D5E0" stroke-width="3" transform="rotate(-30 -46 -26)"/>
+  <ellipse cx="-24" cy="-30" rx="10" ry="26" fill="#fff" stroke="#E8D5E0" stroke-width="3" transform="rotate(-10 -24 -30)"/>
+  <circle cx="-38" cy="8" r="30" fill="#fff" stroke="#E8D5E0" stroke-width="3"/>
+  <path d="M -52 4 Q -46 9 -40 4" stroke="#4A3B5C" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M -34 4 Q -28 9 -22 4" stroke="#4A3B5C" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="-38" cy="16" rx="4" ry="3" fill="#FF7BAC"/>
+  <text x="10" y="-42" font-size="30" fill="#7C5CE0">💤</text></g>`;
+
+const TURTLE = (x, y, s = 1, face = '') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="40" rx="58" ry="12" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="-34" cy="30" rx="12" ry="9" fill="#7BC47F"/><ellipse cx="30" cy="30" rx="12" ry="9" fill="#7BC47F"/>
+  <path d="M -50 24 A 50 42 0 0 1 50 24 Z" fill="#4E9F5B"/>
+  <path d="M -38 12 A 38 30 0 0 1 38 12 Z" fill="#6DBB74"/>
+  <line x1="0" y1="-18" x2="0" y2="22" stroke="#4E9F5B" stroke-width="3"/>
+  <line x1="-30" y1="4" x2="30" y2="4" stroke="#4E9F5B" stroke-width="3"/>
+  <circle cx="56" cy="6" r="18" fill="#7BC47F"/>
+  <circle cx="60" cy="2" r="3.5" fill="#2F5233"/>
+  <path d="M 54 12 Q 60 16 66 12" stroke="#2F5233" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="66" cy="8" r="4" fill="#FFC9DD" opacity=".8"/>
+  ${face}</g>`;
+
+const DUCK = (x, y, s = 1, body = '#FFD93D', beak = '#FF9F5A') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="34" rx="34" ry="8" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="0" cy="12" rx="30" ry="24" fill="${body}"/>
+  <ellipse cx="-8" cy="14" rx="14" ry="10" fill="rgba(255,255,255,.35)"/>
+  <circle cx="20" cy="-16" r="17" fill="${body}"/>
+  <circle cx="25" cy="-19" r="3" fill="#4A3B5C"/>
+  <path d="M 34 -14 q 12 3 0 8 q -6 2 -6 -4 z" fill="${beak}"/>
+  <path d="M -26 6 q -12 -4 -8 8" stroke="${body}" stroke-width="8" fill="none" stroke-linecap="round"/></g>`;
+
+const SWAN = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="30" rx="42" ry="9" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="0" cy="10" rx="38" ry="26" fill="#fff"/>
+  <path d="M -30 0 q -16 -8 -10 12" stroke="#fff" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M 24 4 C 40 -6 34 -34 26 -42 C 22 -46 26 -52 32 -50" stroke="#fff" stroke-width="13" fill="none" stroke-linecap="round"/>
+  <circle cx="33" cy="-50" r="10" fill="#fff"/>
+  <circle cx="36" cy="-52" r="2.6" fill="#4A3B5C"/>
+  <path d="M 42 -49 q 10 2 0 6 q -5 1 -5 -3 z" fill="#FF9F5A"/>
+  <path d="M -18 4 Q 0 -10 20 2" stroke="#EFEAF7" stroke-width="4" fill="none"/></g>`;
+
+const LION = (x, y, s = 1, mouth = 'smile') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="92" rx="60" ry="14" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="0" cy="58" rx="42" ry="36" fill="#F4B860"/>
+  <ellipse cx="-26" cy="88" rx="12" ry="9" fill="#E8A54B"/><ellipse cx="26" cy="88" rx="12" ry="9" fill="#E8A54B"/>
+  <circle cx="0" cy="-8" r="52" fill="#C97B2D"/>
+  <circle cx="0" cy="-8" r="38" fill="#F4B860"/>
+  <ellipse cx="-30" cy="-42" rx="10" ry="10" fill="#C97B2D"/><ellipse cx="30" cy="-42" rx="10" ry="10" fill="#C97B2D"/>
+  <circle cx="-13" cy="-14" r="4.5" fill="#4A3B5C"/><circle cx="13" cy="-14" r="4.5" fill="#4A3B5C"/>
+  <ellipse cx="0" cy="-2" rx="7" ry="5" fill="#8C5A2B"/>
+  ${mouth === 'smile'
+    ? `<path d="M -10 8 Q 0 16 10 8" stroke="#4A3B5C" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="0" cy="10" rx="9" ry="11" fill="#8C5A2B"/><ellipse cx="0" cy="7" rx="9" ry="5" fill="#F4B860"/>`}
+  <circle cx="-24" cy="-2" r="6" fill="#FFC9DD" opacity=".55"/><circle cx="24" cy="-2" r="6" fill="#FFC9DD" opacity=".55"/></g>`;
+
+const MOUSE = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="26" rx="26" ry="6" fill="rgba(0,0,0,.08)"/>
+  <path d="M 24 18 q 22 -2 18 -16" stroke="#B7A6CF" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="0" cy="8" rx="24" ry="18" fill="#CBB8E8"/>
+  <circle cx="-16" cy="-12" r="11" fill="#CBB8E8"/><circle cx="-16" cy="-12" r="6" fill="#FFC9DD"/>
+  <circle cx="0" cy="-14" r="11" fill="#CBB8E8"/><circle cx="0" cy="-14" r="6" fill="#FFC9DD"/>
+  <circle cx="-14" cy="2" r="3" fill="#4A3B5C"/><circle cx="-2" cy="2" r="3" fill="#4A3B5C"/>
+  <circle cx="-22" cy="10" r="3.5" fill="#FF7BAC"/>
+  <path d="M -14 12 Q -8 16 -2 12" stroke="#4A3B5C" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>`;
+
+const NET = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})" stroke="#8C6BAE" stroke-width="3" opacity=".85">
+  ${[0,1,2,3,4].map(i => `<line x1="${i*28}" y1="0" x2="${i*28}" y2="112"/>`).join('')}
+  ${[0,1,2,3,4].map(i => `<line x1="0" y1="${i*28}" x2="112" y2="${i*28}"/>`).join('')}</g>`;
+
+const FLAG = (x, y) => `<g transform="translate(${x},${y})">
+  <rect x="-3" y="-110" width="6" height="110" fill="#9C6B3F" rx="3"/>
+  <path d="M 3 -110 L 70 -92 L 3 -74 Z" fill="#FF5A5F"/>
+  <text x="14" y="-86" font-size="18" fill="#fff">🏁</text></g>`;
+
+const HEARTS = (x, y) => `<text x="${x}" y="${y}" font-size="34">💕</text>`;
+const SNOW = () => [...Array(18)].map((_, i) =>
+  `<circle cx="${(i * 137) % 800}" cy="${(i * 89) % 380}" r="${3 + (i % 3)}" fill="#fff" opacity=".8"/>`).join('');
+
+const PIG = (x, y, s = 1, c = '#FFAEC9', extra = '') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="56" rx="48" ry="13" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="0" cy="12" rx="46" ry="40" fill="${c}"/>
+  <path d="M -34 -28 L -18 -6 L -46 -12 Z" fill="${c}"/>
+  <path d="M 34 -28 L 18 -6 L 46 -12 Z" fill="${c}"/>
+  <circle cx="-16" cy="-2" r="4.5" fill="#4A3B5C"/><circle cx="16" cy="-2" r="4.5" fill="#4A3B5C"/>
+  <ellipse cx="0" cy="20" rx="17" ry="13" fill="#F58BB0"/>
+  <circle cx="-6" cy="20" r="3.5" fill="#C25E85"/><circle cx="6" cy="20" r="3.5" fill="#C25E85"/>
+  <circle cx="-28" cy="10" r="6" fill="#FF8FB3" opacity=".55"/><circle cx="28" cy="10" r="6" fill="#FF8FB3" opacity=".55"/>
+  ${extra}</g>`;
+
+const WOLF = (x, y, s = 1, blow = false) => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="72" rx="52" ry="13" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="0" cy="34" rx="42" ry="40" fill="#8E97A6"/>
+  <path d="M -34 -30 L -20 -4 L -48 -12 Z" fill="#8E97A6"/>
+  <path d="M 34 -30 L 20 -4 L 48 -12 Z" fill="#8E97A6"/>
+  <circle cx="0" cy="-4" r="34" fill="#A6AEBB"/>
+  <ellipse cx="0" cy="8" rx="20" ry="16" fill="#D8DDE5"/>
+  <circle cx="-13" cy="-12" r="4.5" fill="#39414F"/><circle cx="13" cy="-12" r="4.5" fill="#39414F"/>
+  <path d="M -6 2 L 0 8 L 6 2 Z" fill="#39414F"/>
+  ${blow
+    ? `<ellipse cx="0" cy="14" rx="8" ry="10" fill="#5C6472"/><path d="M 24 14 q 26 -4 50 -2 M 26 22 q 24 2 46 6" stroke="#BFE3FF" stroke-width="5" fill="none" stroke-linecap="round" opacity=".85"/>`
+    : `<path d="M -8 12 Q 0 18 8 12" stroke="#39414F" stroke-width="2.5" fill="none" stroke-linecap="round"/>`}
+  </g>`;
+
+const HOUSE = (x, y, type = 'brick', s = 1, broken = false) => {
+  const wall = { straw: '#E8C86A', wood: '#C08A52', brick: '#D9694E' }[type];
+  const roof = { straw: '#C9A94A', wood: '#8C5E38', brick: '#8C4436' }[type];
+  const tex = type === 'brick'
+    ? `<g stroke="#B8543D" stroke-width="2" opacity=".6"><line x1="-50" y1="-16" x2="50" y2="-16"/><line x1="-50" y1="8" x2="50" y2="8"/><line x1="-24" y1="-40" x2="-24" y2="-16"/><line x1="12" y1="-40" x2="12" y2="-16"/><line x1="-6" y1="-16" x2="-6" y2="8"/><line x1="30" y1="-16" x2="30" y2="8"/></g>`
+    : type === 'straw'
+    ? `<g stroke="#C9A94A" stroke-width="2" opacity=".55"><line x1="-44" y1="-34" x2="-44" y2="40"/><line x1="-22" y1="-38" x2="-22" y2="40"/><line x1="22" y1="-38" x2="22" y2="40"/><line x1="44" y1="-34" x2="44" y2="40"/></g>`
+    : `<g stroke="#8C5E38" stroke-width="2" opacity=".5"><line x1="-16" y1="-40" x2="-16" y2="40"/><line x1="16" y1="-40" x2="16" y2="40"/></g>`;
+  if (broken) {
+    return `<g transform="translate(${x},${y}) scale(${s})">
+      <path d="M -50 40 L -46 -6 L -30 -30 L -10 0 L 6 -24 L 24 -4 L 42 -20 L 50 40 Z" fill="${wall}"/>
+      ${tex}
+      <path d="M -44 -12 l 12 -22 M 10 -6 l 14 -20 M 30 -10 l 10 -14" stroke="${roof}" stroke-width="5" stroke-linecap="round"/>
+      <text x="-14" y="-40" font-size="26">💨</text></g>`;
+  }
+  return `<g transform="translate(${x},${y}) scale(${s})">
+    <rect x="-50" y="-40" width="100" height="80" rx="6" fill="${wall}"/>
+    ${tex}
+    <path d="M -60 -40 L 0 -92 L 60 -40 Z" fill="${roof}"/>
+    <rect x="-15" y="0" width="30" height="40" rx="4" fill="${roof}"/>
+    <circle cx="8" cy="22" r="3" fill="#FFD93D"/>
+    <rect x="22" y="-24" width="20" height="20" rx="3" fill="#FFF6D5" stroke="${roof}" stroke-width="3"/>
+    <rect x="-42" y="-24" width="20" height="20" rx="3" fill="#FFF6D5" stroke="${roof}" stroke-width="3"/></g>`;
+};
+
+const BOY = (x, y, s = 1, mood = 'happy', shirt = '#5AA9E6') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="82" rx="32" ry="9" fill="rgba(0,0,0,.08)"/>
+  <rect x="-16" y="52" width="12" height="28" rx="6" fill="#6B4E8C"/><rect x="4" y="52" width="12" height="28" rx="6" fill="#6B4E8C"/>
+  <rect x="-24" y="8" width="48" height="50" rx="16" fill="${shirt}"/>
+  <circle cx="0" cy="-16" r="27" fill="#FBD9B0"/>
+  <path d="M -27 -18 Q -22 -46 0 -46 Q 22 -46 27 -18 Q 18 -36 0 -36 Q -18 -36 -27 -18 Z" fill="#5A3E2B"/>
+  <circle cx="-10" cy="-16" r="3.8" fill="#4A3B5C"/><circle cx="10" cy="-16" r="3.8" fill="#4A3B5C"/>
+  ${mood === 'happy'
+    ? `<path d="M -9 -4 Q 0 4 9 -4" stroke="#B5654A" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : mood === 'shout'
+    ? `<ellipse cx="0" cy="-2" rx="7" ry="9" fill="#B5654A"/>`
+    : `<path d="M -9 0 Q 0 -6 9 0" stroke="#B5654A" stroke-width="3" fill="none" stroke-linecap="round"/>`}
+  <circle cx="-16" cy="-8" r="5" fill="#FFB3B3" opacity=".5"/><circle cx="16" cy="-8" r="5" fill="#FFB3B3" opacity=".5"/></g>`;
+
+const SHEEP = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="34" rx="40" ry="10" fill="rgba(0,0,0,.08)"/>
+  <rect x="-18" y="14" width="7" height="20" rx="3" fill="#4A4453"/><rect x="11" y="14" width="7" height="20" rx="3" fill="#4A4453"/>
+  <circle cx="-22" cy="4" r="16" fill="#fff"/><circle cx="0" cy="-6" r="18" fill="#fff"/><circle cx="22" cy="4" r="16" fill="#fff"/>
+  <circle cx="-10" cy="14" r="15" fill="#fff"/><circle cx="12" cy="14" r="15" fill="#fff"/><circle cx="0" cy="6" r="17" fill="#fff"/>
+  <ellipse cx="28" cy="-2" rx="13" ry="15" fill="#4A4453"/>
+  <ellipse cx="18" cy="-10" rx="5" ry="9" fill="#39343F"/>
+  <circle cx="32" cy="-4" r="2.5" fill="#fff"/></g>`;
+
+const ANT = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="20" cy="0" rx="15" ry="11" fill="#8C4A2F"/>
+  <circle cx="2" cy="0" r="8" fill="#A85A38"/>
+  <circle cx="-14" cy="-1" r="9" fill="#8C4A2F"/>
+  <circle cx="-16" cy="-3" r="2" fill="#fff"/>
+  <path d="M -21 -8 Q -28 -18 -23 -23 M -16 -9 Q -18 -21 -11 -24" stroke="#8C4A2F" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <g stroke="#8C4A2F" stroke-width="2" stroke-linecap="round"><path d="M 2 6 l 6 12 M 8 4 l 10 10 M -2 6 l -6 12"/></g></g>`;
+
+const HOPPER = (x, y, s = 1, note = false) => `<g transform="translate(${x},${y}) scale(${s})">
+  <path d="M 6 6 Q 24 26 40 12" stroke="#4E9F3D" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="18" cy="0" rx="26" ry="11" fill="#6DBB55"/>
+  <ellipse cx="22" cy="-4" rx="20" ry="8" fill="#8FD47A" opacity=".75"/>
+  <circle cx="-8" cy="-2" r="11" fill="#7FC968"/>
+  <circle cx="-11" cy="-4" r="2.6" fill="#2F5233"/>
+  <path d="M -14 -10 Q -22 -24 -14 -30 M -8 -11 Q -12 -26 -4 -30" stroke="#6DBB55" stroke-width="2" fill="none" stroke-linecap="round"/>
+  ${note ? '<text x="30" y="-24" font-size="26">🎵</text>' : ''}</g>`;
+
+const GRAIN = (x, y) => `<g transform="translate(${x},${y})"><ellipse cx="0" cy="0" rx="7" ry="10" fill="#E8B94A"/><line x1="0" y1="-10" x2="0" y2="10" stroke="#C99A2E" stroke-width="1.5"/></g>`;
+
+const FOX = (x, y, s = 1, face = '') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="72" rx="46" ry="12" fill="rgba(0,0,0,.08)"/>
+  <path d="M 30 60 Q 72 50 66 12 Q 58 30 42 30 Z" fill="#E8843C"/>
+  <path d="M 44 24 Q 63 18 62 0 Q 55 13 45 15 Z" fill="#FBEBD8"/>
+  <ellipse cx="0" cy="40" rx="34" ry="34" fill="#E8843C"/>
+  <ellipse cx="0" cy="52" rx="20" ry="22" fill="#FBEBD8"/>
+  <circle cx="0" cy="-2" r="30" fill="#E8843C"/>
+  <path d="M -30 -26 L -14 -4 L -38 -12 Z" fill="#E8843C"/>
+  <path d="M 30 -26 L 14 -4 L 38 -12 Z" fill="#E8843C"/>
+  <path d="M -24 -20 L -16 -6 L -30 -12 Z" fill="#5A3520"/>
+  <path d="M 24 -20 L 16 -6 L 30 -12 Z" fill="#5A3520"/>
+  <path d="M -16 2 Q 0 8 16 2 Q 10 20 0 22 Q -10 20 -16 2 Z" fill="#FBEBD8"/>
+  <circle cx="-11" cy="-6" r="4" fill="#4A3B5C"/><circle cx="11" cy="-6" r="4" fill="#4A3B5C"/>
+  <path d="M -5 6 L 0 11 L 5 6 Z" fill="#4A3B5C"/>
+  ${face}</g>`;
+
+const CROW = (x, y, s = 1, face = '') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="36" rx="32" ry="8" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="-2" cy="8" rx="30" ry="23" fill="#3B3A46"/>
+  <path d="M -28 6 Q -50 10 -44 22 Q -34 16 -26 18 Z" fill="#2E2D38"/>
+  <circle cx="18" cy="-14" r="15" fill="#3B3A46"/>
+  <path d="M 31 -16 l 22 3 l -20 7 z" fill="#F4A93C"/>
+  <circle cx="21" cy="-17" r="3.2" fill="#fff"/><circle cx="22" cy="-16" r="1.6" fill="#000"/>
+  <path d="M -4 4 Q -22 0 -30 12 Q -14 12 -2 6 Z" fill="#2E2D38"/>
+  <line x1="-8" y1="30" x2="-8" y2="41" stroke="#F4A93C" stroke-width="3"/><line x1="6" y1="30" x2="6" y2="41" stroke="#F4A93C" stroke-width="3"/>
+  ${face}</g>`;
+
+const PITCHER = (x, y, s = 1, water = 0.35, pebbles = 0) => {
+  const bot = 46, top = -32;
+  const wl = Math.round(bot - (bot - top) * water);
+  let peb = '';
+  const P = [[-14, 38], [8, 40], [-2, 34], [18, 36], [-20, 34], [12, 30], [0, 26], [-10, 28], [6, 22], [-4, 18]];
+  for (let i = 0; i < pebbles && i < P.length; i++) peb += `<circle cx="${P[i][0]}" cy="${P[i][1]}" r="6.5" fill="#9AA3AF" stroke="#727B87" stroke-width="1.5"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">
+    <ellipse cx="0" cy="58" rx="42" ry="10" fill="rgba(0,0,0,.08)"/>
+    <path d="M -40 ${wl} Q -30 ${wl - 4} 0 ${wl} Q 30 ${wl - 4} 40 ${wl} L 40 20 Q 40 48 0 48 Q -40 48 -40 20 Z" fill="#5EC6E6" opacity=".85"/>
+    ${peb}
+    <path d="M -17 -66 L 17 -66 L 15 -50 Q 40 -34 40 18 Q 40 48 0 48 Q -40 48 -40 18 Q -40 -34 -15 -50 Z" fill="#CDEAF2" opacity=".42" stroke="#8FC7D8" stroke-width="3"/>
+    <ellipse cx="0" cy="-66" rx="17" ry="5" fill="#CDEAF2" opacity=".7" stroke="#8FC7D8" stroke-width="2.5"/></g>`;
+};
+
+const GRAPES = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <path d="M 0 -18 Q 8 -30 2 -40 M 2 -34 q 16 -6 24 4" stroke="#6B8E3D" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <g fill="#8E5AA8">
+    <circle cx="-14" cy="-14" r="9"/><circle cx="2" cy="-16" r="9"/><circle cx="16" cy="-12" r="9"/>
+    <circle cx="-8" cy="0" r="9"/><circle cx="8" cy="0" r="9"/><circle cx="-18" cy="0" r="9"/><circle cx="18" cy="2" r="9"/>
+    <circle cx="-2" cy="14" r="9"/><circle cx="12" cy="14" r="9"/><circle cx="-12" cy="14" r="9"/>
+    <circle cx="4" cy="26" r="9"/><circle cx="-6" cy="26" r="9"/></g>
+  <g fill="#B98AD0" opacity=".55"><circle cx="-16" cy="-16" r="3"/><circle cx="0" cy="-18" r="3"/><circle cx="-4" cy="12" r="3"/><circle cx="2" cy="24" r="3"/></g></g>`;
+
+const BONE = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <rect x="-20" y="-5" width="40" height="10" rx="5" fill="#FFF3D6" stroke="#E0C99A" stroke-width="1.5"/>
+  <circle cx="-20" cy="-6" r="7" fill="#FFF3D6" stroke="#E0C99A" stroke-width="1.5"/><circle cx="-20" cy="6" r="7" fill="#FFF3D6" stroke="#E0C99A" stroke-width="1.5"/>
+  <circle cx="20" cy="-6" r="7" fill="#FFF3D6" stroke="#E0C99A" stroke-width="1.5"/><circle cx="20" cy="6" r="7" fill="#FFF3D6" stroke="#E0C99A" stroke-width="1.5"/></g>`;
+
+const DOG = (x, y, s = 1, bone = false, face = '') => `<g transform="translate(${x},${y}) scale(${s})">
+  <ellipse cx="0" cy="72" rx="46" ry="12" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="0" cy="40" rx="36" ry="34" fill="#D9A46A"/>
+  <ellipse cx="0" cy="50" rx="22" ry="22" fill="#F0D8B8"/>
+  <ellipse cx="-30" cy="-8" rx="11" ry="21" fill="#B77E45"/><ellipse cx="30" cy="-8" rx="11" ry="21" fill="#B77E45"/>
+  <circle cx="0" cy="-2" r="30" fill="#D9A46A"/>
+  <ellipse cx="0" cy="8" rx="18" ry="15" fill="#F0D8B8"/>
+  <circle cx="-11" cy="-6" r="4" fill="#4A3B5C"/><circle cx="11" cy="-6" r="4" fill="#4A3B5C"/>
+  <ellipse cx="0" cy="4" rx="6" ry="4.5" fill="#4A3B5C"/>
+  ${bone ? BONE(0, 20, 0.82) : `<path d="M -8 14 Q 0 20 8 14" stroke="#4A3B5C" stroke-width="2.5" fill="none" stroke-linecap="round"/>`}
+  ${face}</g>`;
+
+const ARBOR = (x, y, w = 180) => `<g transform="translate(${x},${y})">
+  <rect x="0" y="0" width="${w}" height="14" rx="6" fill="#9C6B3F"/>
+  <rect x="6" y="10" width="11" height="130" rx="4" fill="#9C6B3F"/>
+  <rect x="${w - 17}" y="10" width="11" height="130" rx="4" fill="#9C6B3F"/>
+  <path d="M 0 7 q ${w / 2} -26 ${w} 0" stroke="#6DAF4E" stroke-width="5" fill="none"/></g>`;
+
+const STREAM = (color = '#8FD0F0') => `<path d="M 0 420 Q 200 400 400 420 Q 600 440 800 415 L 800 500 L 0 500 Z" fill="${color}"/>`;
+
+const BRIDGE = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})">
+  <rect x="-90" y="0" width="180" height="18" rx="4" fill="#B5814C"/>
+  <rect x="-90" y="-4" width="180" height="8" rx="3" fill="#C99A66"/>
+  ${[-80, -50, -20, 10, 40, 70].map(px => `<line x1="${px}" y1="18" x2="${px}" y2="46" stroke="#8C6238" stroke-width="6"/>`).join('')}
+  <rect x="-90" y="-24" width="8" height="24" fill="#8C6238"/><rect x="82" y="-24" width="8" height="24" fill="#8C6238"/>
+  <line x1="-86" y1="-22" x2="86" y2="-22" stroke="#8C6238" stroke-width="5"/></g>`;
+
+const wrap = (inner) => `<svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">${inner}</svg>`;
+
+/* ============================================================
+   STORIES
+   ============================================================ */
+const STORIES = [
+  {
+    id: 'rabbit-turtle',
+    title: '🐰 กระต่ายกับเต่า 🐢',
+    subtitle: 'ความพยายามอยู่ที่ไหน ความสำเร็จอยู่ที่นั่น',
+    cover: wrap(`${SKY('#AEE8FF','#E8FFF4')}${SUN(690,80)}${CLOUD(180,90)}${CLOUD(560,140,.8)}
+      ${GROUND('#8FD694')}${TREE(120,340)}${FLOWER(300,430)}${FLOWER(520,450,'#FFC93C')}
+      ${RABBIT(300,330,.9)}${TURTLE(510,380,1)}`),
+    scenes: [
+      {
+        text: 'กาลครั้งหนึ่ง ในป่าใหญ่แสนสวย มีกระต่ายน้อยขาปุยที่วิ่งเร็วที่สุดในป่า วันหนึ่งกระต่ายเจอเต่าเดินช้าต้วมเตี้ยม จึงหัวเราะว่า "เต่าเอ๋ย เดินช้าอย่างนี้ เมื่อไหร่จะถึงล่ะจ๊ะ"',
+        art: wrap(`${SKY('#AEE8FF','#E8FFF4')}${SUN(690,80)}${CLOUD(160,100)}${CLOUD(500,70,.7)}
+          ${GROUND('#8FD694')}${TREE(90,330)}${TREE(710,350,.8,'#6DCF7C')}${FLOWER(200,440)}${FLOWER(620,460,'#FFC93C')}
+          ${RABBIT(280,320,1,'<text x="40" y="-40" font-size="34">😆</text>')}
+          ${TURTLE(520,390,1)}`)
+      },
+      {
+        text: 'เต่ายิ้มแล้วตอบว่า "ถ้าอย่างนั้น เรามาวิ่งแข่งกันดีไหมจ๊ะ" กระต่ายหัวเราะลั่น "ตกลงจ้า!" นกฮูกผู้ใหญ่ใจดีจึงเป่านกหวีด ปรี๊ด! การแข่งขันเริ่มต้นขึ้นแล้ว!',
+        art: wrap(`${SKY('#FFE9C7','#FFF7E0')}${SUN(110,90)}${CLOUD(420,80,.8)}${CLOUD(660,130,.6)}
+          ${GROUND('#A8DFA0')}${FLAG(400,470)}
+          ${RABBIT(230,330,.95,'<g transform="rotate(-12)"><ellipse cx="-46" cy="60" rx="14" ry="7" fill="#fff" stroke="#E8D5E0" stroke-width="3"/></g>')}
+          ${TURTLE(540,395,.95)}
+          <text x="360" y="150" font-size="44">🦉</text><text x="410" y="130" font-size="30">📣</text>`)
+      },
+      {
+        text: 'กระต่ายวิ่งปรู๊ดปร๊าดนำไปไกลลิบ พอหันกลับมาไม่เห็นเต่าเลย จึงคิดว่า "งีบสักหน่อยดีกว่า ยังไงเราก็ชนะแน่ๆ" แล้วกระต่ายก็หลับปุ๋ยใต้ต้นไม้ใหญ่ ส่วนเต่าค่อยๆ เดินไป ทีละก้าว ทีละก้าว ไม่หยุดพักเลย',
+        art: wrap(`${SKY('#BFE3FF','#F0FFF4')}${SUN(700,90)}${CLOUD(200,80)}
+          ${GROUND('#8FD694')}${TREE(230,300,1.4)}
+          ${RABBIT_SLEEP(250,400,1.1)}
+          ${TURTLE(580,410,.85)}
+          ${FLOWER(450,460)}${FLOWER(680,470,'#FFC93C')}`)
+      },
+      {
+        text: 'เต่าเดินมาถึงเส้นชัยก่อน! เพื่อนๆ สัตว์ทั้งป่าโห่ร้องดีใจ "เย้! เต่าชนะแล้ว!" เสียงเชียร์ดังปลุกกระต่ายให้ตื่น กระต่ายรีบวิ่งสุดแรง แต่ก็ไม่ทันเสียแล้วจ้า',
+        art: wrap(`${SKY('#FFD9E8','#FFF3E0')}${SUN(120,100)}${CLOUD(520,70,.8)}
+          ${GROUND('#A8DFA0')}${FLAG(560,460)}
+          ${TURTLE(460,400,1.05,'<text x="30" y="-40" font-size="32">🎉</text>')}
+          ${RABBIT(160,340,.9,'<text x="38" y="-40" font-size="32">😲</text>')}
+          <text x="620" y="330" font-size="36">🐿️</text><text x="690" y="360" font-size="36">🐦</text>
+          <text x="380" y="180" font-size="40">🎊</text><text x="500" y="150" font-size="40">✨</text>`)
+      },
+      {
+        text: 'กระต่ายเดินมาขอโทษเต่า "ขอโทษนะที่ล้อเธอ เธอเก่งมากเลย" แล้วทั้งสองก็เป็นเพื่อนรักกัน นิทานเรื่องนี้สอนให้รู้ว่า ความพยายามอยู่ที่ไหน ความสำเร็จอยู่ที่นั่น อย่าประมาทและอย่าดูถูกคนอื่นนะจ๊ะ',
+        art: wrap(`${SKY('#FFEBC9','#FFDFF0')}${SUN(400,90)}${CLOUD(150,140,.7)}${CLOUD(640,120,.7)}
+          ${GROUND('#8FD694')}${TREE(90,340,.9)}${TREE(710,340,.9)}
+          ${RABBIT(310,340,.95)}${TURTLE(480,390,.95)}
+          ${HEARTS(380,230)}${FLOWER(180,450)}${FLOWER(620,460,'#FFC93C')}`)
+      }
+    ]
+  },
+  {
+    id: 'ugly-duckling',
+    title: '🦢 ลูกเป็ดขี้เหร่',
+    subtitle: 'ทุกคนมีความงามในแบบของตัวเอง',
+    cover: wrap(`${SKY('#C9F0FF','#EAFBF0')}${SUN(110,90)}${CLOUD(600,100)}
+      ${GROUND('#B5E3C8')}<ellipse cx="400" cy="470" rx="260" ry="50" fill="#8FD0F0"/>
+      ${SWAN(400,420,1.1)}${DUCK(200,430,.8)}${DUCK(600,435,.8)}`),
+    scenes: [
+      {
+        text: 'ริมสระน้ำใสแจ๋ว แม่เป็ดกำลังกกไข่ห้าฟอง แต่มีไข่ใบหนึ่งใหญ่กว่าเพื่อน เป๊าะแป๊ะ! ไข่ฟักออกมาเป็นลูกเป็ดน่ารักสี่ตัว ส่วนไข่ใบใหญ่ ออกมาเป็นลูกเป็ดตัวสีเทา ตัวโตกว่าใครเลยจ้า',
+        art: wrap(`${SKY('#C9F0FF','#F0FFF4')}${SUN(680,90)}${CLOUD(200,90)}
+          ${GROUND('#B5E3C8')}<ellipse cx="400" cy="490" rx="300" ry="55" fill="#8FD0F0"/>
+          ${DUCK(250,380,1.3)}
+          ${DUCK(420,420,.6)}${DUCK(500,410,.6)}${DUCK(580,425,.6)}${DUCK(660,415,.6)}
+          ${DUCK(360,430,.85,'#BFC9CE','#8899A0')}
+          <ellipse cx="250" cy="430" rx="60" ry="18" fill="#F2E3C4"/>
+          <text x="180" y="300" font-size="30">🥚</text>`)
+      },
+      {
+        text: 'พี่ๆ เป็ดชอบล้อว่า "แกตัวสีเทา ไม่เหมือนพวกเราเลย" ลูกเป็ดสีเทาเสียใจมาก น้ำตาไหลริน แล้วตัดสินใจเดินออกจากบ้าน ไปหาที่ที่มีเพื่อนเล่นด้วยกัน',
+        art: wrap(`${SKY('#D8D0F0','#FFE8D0')}${CLOUD(160,90,.8)}${CLOUD(560,70,.7)}
+          ${GROUND('#A8CDA8')}
+          ${DUCK(560,390,.75)}${DUCK(650,400,.75)}${DUCK(610,350,.7)}
+          ${DUCK(230,420,.95,'#BFC9CE','#8899A0')}
+          <text x="255" y="360" font-size="26">💧</text>
+          <path d="M 60 470 Q 200 450 340 470" stroke="#8B9E8B" stroke-width="4" fill="none" opacity=".5"/>`)
+      },
+      {
+        text: 'ฤดูหนาวมาถึง หิมะโปรยปราย ลูกเป็ดสีเทาหนาวเหน็บและเหงาเหลือเกิน แต่เขาไม่ยอมแพ้ เขาอดทนหาอาหาร และรอคอยให้ฤดูใบไม้ผลิมาถึง',
+        art: wrap(`${SKY('#8FA6D9','#D8E4F0')}${MOON(680,90)}${SNOW()}
+          <ellipse cx="400" cy="560" rx="560" ry="150" fill="#EAF2FA"/>
+          ${TREE(130,340,.9,'#CBD8E8')}${TREE(680,350,.8,'#CBD8E8')}
+          ${DUCK(400,420,1,'#BFC9CE','#8899A0')}
+          <path d="M 340 450 Q 400 465 460 450" stroke="#fff" stroke-width="10" fill="none" stroke-linecap="round"/>`)
+      },
+      {
+        text: 'เมื่อฤดูใบไม้ผลิมาถึง ดอกไม้บานสะพรั่ง ลูกเป็ดมองลงไปในน้ำ แล้วต้องตกใจ! เงาในน้ำคือหงส์ขาวแสนสง่างาม "นั่นเราเหรอ!" ที่แท้เขาไม่ใช่ลูกเป็ด แต่เป็นลูกหงส์มาตลอดเลยจ้า',
+        art: wrap(`${SKY('#C9F0FF','#FFE8F4')}${SUN(120,90)}${CLOUD(560,80)}
+          ${GROUND('#A8DFA0')}<ellipse cx="400" cy="490" rx="300" ry="60" fill="#8FD0F0"/>
+          ${SWAN(400,400,1.15)}
+          <g opacity=".35" transform="translate(400,505) scale(1,-0.45)">${SWAN(0,0,1.15)}</g>
+          ${FLOWER(140,430)}${FLOWER(660,440,'#FFC93C')}${FLOWER(240,460,'#CBB8E8')}
+          <text x="600" y="200" font-size="34">🦋</text>`)
+      },
+      {
+        text: 'ฝูงหงส์บินมาชวนเขาไปอยู่ด้วยกัน "เธอสวยที่สุดเลย!" นิทานเรื่องนี้สอนให้รู้ว่า ทุกคนมีความงามในแบบของตัวเอง ถึงวันนี้จะยังไม่มีใครเห็น แต่สักวันความงามนั้นจะเปล่งประกายแน่นอนจ้ะ',
+        art: wrap(`${SKY('#FFE1B8','#FFD0E8')}${SUN(400,100)}${CLOUD(140,150,.7)}${CLOUD(650,130,.7)}
+          ${GROUND('#B5E3C8')}<ellipse cx="400" cy="490" rx="320" ry="60" fill="#8FD0F0"/>
+          ${SWAN(300,410,1)}${SWAN(500,415,.95)}${SWAN(400,440,.8)}
+          ${HEARTS(390,240)}
+          <text x="150" y="220" font-size="30">🕊️</text><text x="620" y="250" font-size="30">🕊️</text>`)
+      }
+    ]
+  },
+  {
+    id: 'lion-mouse',
+    title: '🦁 ราชสีห์กับหนูน้อย 🐭',
+    subtitle: 'น้ำใจเล็กๆ ยิ่งใหญ่เสมอ',
+    cover: wrap(`${SKY('#FFE3B8','#FFF6E0')}${SUN(680,90)}${CLOUD(200,100)}
+      ${GROUND('#E8C97A')}${TREE(110,340,1,'#7BC47F')}
+      ${LION(430,300,1)}${MOUSE(230,430,1.2)}`),
+    scenes: [
+      {
+        text: 'ในทุ่งหญ้ากว้างใหญ่ ราชสีห์เจ้าป่ากำลังนอนหลับสบาย ทันใดนั้น หนูน้อยตัวจิ๋ววิ่งซุกซนผ่านมา แล้วเผลอวิ่งขึ้นไปบนจมูกของราชสีห์! "ฮ่าห์!" ราชสีห์ตื่นขึ้นมาทันที',
+        art: wrap(`${SKY('#FFE3B8','#FFF6E0')}${SUN(680,90)}${CLOUD(180,110)}
+          ${GROUND('#E8C97A')}${TREE(700,340,.9,'#7BC47F')}
+          ${LION(400,310,1.05,'roar')}
+          ${MOUSE(390,215,.85)}
+          <text x="510" y="180" font-size="34">❗</text>`)
+      },
+      {
+        text: 'ราชสีห์จับหนูน้อยไว้ในอุ้งเท้า หนูน้อยตัวสั่นแล้วพูดว่า "ท่านราชสีห์ ได้โปรดปล่อยข้าเถิด สักวันข้าจะตอบแทนบุญคุณท่าน" ราชสีห์หัวเราะ "เจ้าตัวนิดเดียวจะช่วยข้าได้อย่างไร" แต่ก็ใจดีปล่อยหนูน้อยไป',
+        art: wrap(`${SKY('#FFEBC9','#FFF9E8')}${SUN(120,90)}${CLOUD(520,80,.8)}
+          ${GROUND('#E8C97A')}${FLOWER(660,450,'#FF7BAC')}
+          ${LION(340,310,1.05)}
+          ${MOUSE(480,400,1)}
+          <text x="500" y="330" font-size="28">🙏</text>`)
+      },
+      {
+        text: 'หลายวันต่อมา ราชสีห์ติดตาข่ายของนายพราน! ดิ้นเท่าไหร่ก็ไม่หลุด "ช่วยด้วย~!" เสียงร้องดังไปทั้งป่า หนูน้อยได้ยินเสียง จึงรีบวิ่งมาทันที',
+        art: wrap(`${SKY('#C9B8E8','#FFD9C9')}${CLOUD(600,90,.8)}${CLOUD(150,70,.7)}
+          ${GROUND('#D9BC72')}${TREE(690,330,.9,'#6B9E5F')}
+          ${LION(370,320,1,'roar')}
+          ${NET(295,235,1.3)}
+          ${MOUSE(140,430,1.1)}
+          <text x="480" y="170" font-size="34">😖</text><text x="180" y="360" font-size="28">💨</text>`)
+      },
+      {
+        text: 'หนูน้อยใช้ฟันคมๆ แทะเชือก กร๊อบๆ กร๊อบๆ จนตาข่ายขาด ราชสีห์เป็นอิสระ! "ขอบใจมากเจ้าหนูน้อย เจ้าตัวเล็กแต่ใจใหญ่จริงๆ" นิทานเรื่องนี้สอนให้รู้ว่า น้ำใจเล็กๆ ก็ยิ่งใหญ่ได้ และเพื่อนแท้ไม่ได้วัดกันที่ตัวโตนะจ๊ะ',
+        art: wrap(`${SKY('#FFDCB8','#FFE8F0')}${SUN(400,90)}${CLOUD(160,140,.7)}${CLOUD(640,120,.7)}
+          ${GROUND('#E8C97A')}${TREE(100,340,.9,'#7BC47F')}${FLOWER(680,450,'#FFC93C')}
+          ${LION(430,310,1)}
+          ${MOUSE(270,420,1.2)}
+          ${HEARTS(340,220)}
+          <text x="560" y="200" font-size="34">🎉</text>`)
+      }
+    ]
+  },
+  {
+    id: 'three-pigs',
+    title: '🐷 ลูกหมูสามตัว 🏠',
+    subtitle: 'ความขยันและความรอบคอบช่วยให้ปลอดภัย',
+    cover: wrap(`${SKY('#BFE7FF','#EFFBF0')}${SUN(680,80)}${CLOUD(180,100)}${CLOUD(520,70,.7)}
+      ${GROUND('#8FD694')}${HOUSE(400,360,'brick',.9)}
+      ${PIG(180,400,.75)}${PIG(300,420,.7,'#FFC2D6')}${PIG(600,410,.72,'#FFB0C9')}`),
+    scenes: [
+      {
+        text: 'กาลครั้งหนึ่ง มีลูกหมูสามตัวพี่น้อง โตพอที่จะออกไปสร้างบ้านของตัวเอง แม่หมูกอดลาแล้วบอกว่า "จงสร้างบ้านให้แข็งแรงนะลูก" ลูกหมูทั้งสามก็ออกเดินทางด้วยความสดใส',
+        art: wrap(`${SKY('#BFE7FF','#EFFBF0')}${SUN(690,80)}${CLOUD(170,100)}${CLOUD(500,70,.7)}
+          ${GROUND('#8FD694')}${TREE(90,330)}${TREE(710,340,.8,'#6DCF7C')}${FLOWER(250,450)}${FLOWER(560,460,'#FFC93C')}
+          ${PIG(250,360,.95,'#FFAEC9','<text x="34" y="-40" font-size="30">😊</text>')}
+          ${PIG(400,380,.9,'#FFC2D6')}${PIG(540,365,.92,'#FFB0C9')}`)
+      },
+      {
+        text: 'ลูกหมูตัวแรกขี้เกียจ รีบสร้างบ้านฟางเสร็จไวๆ แล้ววิ่งไปเล่น ตัวที่สองสร้างบ้านไม้ ใช้เวลาหน่อยแล้วก็ไปเล่นด้วย ทั้งสองหัวเราะว่า "บ้านเราเสร็จแล้ว สบายจัง!"',
+        art: wrap(`${SKY('#FFE9C7','#FFF7E0')}${SUN(120,90)}${CLOUD(430,80,.8)}
+          ${GROUND('#A8DFA0')}
+          ${HOUSE(200,370,'straw',.8)}${HOUSE(560,370,'wood',.8)}
+          ${PIG(300,410,.72,'#FFAEC9')}${PIG(460,415,.72,'#FFC2D6')}
+          <text x="360" y="240" font-size="30">🎶</text>`)
+      },
+      {
+        text: 'ส่วนลูกหมูตัวที่สามขยันมาก เขาค่อยๆ ก่อบ้านด้วยอิฐทีละก้อน เหงื่อไหลแต่ไม่ยอมหยุด "บ้านที่แข็งแรงต้องใช้ความตั้งใจ" พี่น้องล้อว่าโง่ แต่เขาก็ยังตั้งใจสร้างต่อไป',
+        art: wrap(`${SKY('#CFF0FF','#F0FFF4')}${SUN(690,90)}${CLOUD(200,90)}
+          ${GROUND('#8FD694')}${TREE(700,330,.85,'#6DCF7C')}
+          ${HOUSE(430,360,'brick',.95)}
+          ${PIG(180,410,.85,'#FFB0C9','<text x="34" y="-40" font-size="26">💪</text>')}
+          <text x="250" y="330" font-size="26">🧱</text>`)
+      },
+      {
+        text: 'วันหนึ่งเจ้าหมาป่าหิวโหยมาถึง! มันสูดลมหายใจเข้าเต็มปอด แล้วเป่าฟู่~~ บ้านฟางปลิวหาย! เป่าอีกที บ้านไม้ก็พังครืน! ลูกหมูสองตัวตกใจ รีบวิ่งหนีไปหาบ้านอิฐของน้องคนเล็ก',
+        art: wrap(`${SKY('#D8C4E8','#FFD9C9')}${CLOUD(150,80,.7)}${CLOUD(560,100,.7)}
+          ${GROUND('#9ECF92')}
+          ${HOUSE(180,370,'straw',.8,true)}
+          ${WOLF(430,320,1.05,true)}
+          ${PIG(600,410,.7,'#FFAEC9','<text x="30" y="-40" font-size="26">😱</text>')}
+          ${PIG(690,420,.68,'#FFC2D6')}
+          <text x="120" y="200" font-size="30">💨</text>`)
+      },
+      {
+        text: 'หมาป่าเป่าบ้านอิฐเท่าไหร่ก็ไม่พัง! เป่าจนหมดแรง ต้องยอมแพ้วิ่งหนีไป ลูกหมูสามตัวกอดกันอย่างปลอดภัย นิทานเรื่องนี้สอนว่า ความขยันและความรอบคอบในวันนี้ จะปกป้องเราในวันข้างหน้าเสมอจ้ะ',
+        art: wrap(`${SKY('#FFE1B8','#FFDFF0')}${SUN(400,90)}${CLOUD(150,140,.7)}${CLOUD(650,120,.7)}
+          ${GROUND('#8FD694')}${TREE(90,340,.9)}${FLOWER(680,450,'#FFC93C')}
+          ${HOUSE(420,360,'brick',1)}
+          ${PIG(180,415,.7,'#FFAEC9')}${PIG(270,425,.68,'#FFC2D6')}${PIG(600,415,.7,'#FFB0C9')}
+          ${HEARTS(360,220)}
+          <text x="700" y="330" font-size="30">🏃‍♂️</text>`)
+      }
+    ]
+  },
+  {
+    id: 'boy-wolf',
+    title: '🐑 เด็กเลี้ยงแกะ',
+    subtitle: 'พูดโกหกบ่อยๆ พอพูดจริงก็ไม่มีใครเชื่อ',
+    cover: wrap(`${SKY('#CFF0FF','#EFFBEF')}${SUN(680,80)}${CLOUD(170,100)}
+      ${GROUND('#8FD694')}${TREE(120,330)}
+      ${BOY(340,330,1)}${SHEEP(500,400,1)}${SHEEP(620,410,.85)}`),
+    scenes: [
+      {
+        text: 'มีเด็กเลี้ยงแกะคนหนึ่ง ต้องพาฝูงแกะไปกินหญ้าบนเนินเขาทุกวัน วันหนึ่งเขารู้สึกเบื่อและเหงา จึงคิดเล่นสนุก ตะโกนดังลั่นว่า "หมาป่ามาแล้ว! ช่วยด้วย!"',
+        art: wrap(`${SKY('#CFF0FF','#EFFBEF')}${SUN(690,80)}${CLOUD(180,100)}${CLOUD(520,70,.7)}
+          ${GROUND('#8FD694')}${TREE(710,330,.85,'#6DCF7C')}${FLOWER(180,450)}
+          ${BOY(320,330,1.05,'shout')}
+          ${SHEEP(500,400,1)}${SHEEP(620,415,.85)}
+          <text x="360" y="230" font-size="30">📣</text>`)
+      },
+      {
+        text: 'ชาวบ้านได้ยินเสียง ต่างรีบวิ่งขึ้นเนินเขามาช่วย ถือไม้ถือจอบกันมาเต็มไปหมด แต่พอมาถึง กลับไม่เห็นหมาป่าสักตัว เด็กเลี้ยงแกะหัวเราะชอบใจ "หลอกเล่นน่ะ อิอิ"',
+        art: wrap(`${SKY('#FFE9C7','#FFF7E0')}${SUN(120,90)}${CLOUD(560,90,.7)}
+          ${GROUND('#A8DFA0')}
+          ${BOY(250,340,1,'happy')}
+          ${BOY(470,350,.85,'flat','#E67E5A')}${BOY(570,355,.85,'flat','#6DBB74')}${BOY(660,350,.8,'flat','#C97BC9')}
+          ${SHEEP(160,420,.7)}
+          <text x="470" y="250" font-size="28">😠</text>`)
+      },
+      {
+        text: 'ผ่านไปไม่กี่วัน เด็กเลี้ยงแกะก็แกล้งอีกครั้ง "หมาป่ามาแล้ว!" ชาวบ้านก็วิ่งมาช่วยอีก แต่ก็ถูกหลอกอีก คราวนี้ทุกคนโกรธมาก "อย่ามาโกหกพวกเราอีกนะ!"',
+        art: wrap(`${SKY('#E8D0C4','#FFF0E0')}${SUN(680,90)}${CLOUD(200,90,.7)}
+          ${GROUND('#9ECF92')}${TREE(100,330,.8,'#6DCF7C')}
+          ${BOY(560,345,1,'happy')}
+          ${BOY(230,350,.9,'flat','#E67E5A')}${BOY(330,355,.9,'flat','#6DBB74')}
+          <text x="230" y="250" font-size="28">😡</text><text x="330" y="255" font-size="26">😤</text>`)
+      },
+      {
+        text: 'อยู่มาวันหนึ่ง หมาป่าตัวจริงบุกมาไล่ฝูงแกะจริงๆ! เด็กเลี้ยงแกะตกใจสุดตัว ตะโกนสุดเสียง "หมาป่ามาแล้ว! ช่วยด้วยจริงๆ นะ!" แต่คราวนี้... ไม่มีชาวบ้านคนไหนวิ่งมาเลย เพราะคิดว่าเขาโกหกอีก',
+        art: wrap(`${SKY('#B7A6CF','#FFD9C9')}${CLOUD(150,80,.7)}${CLOUD(560,100,.7)}
+          ${GROUND('#8FB582')}${TREE(700,330,.8,'#5E9E55')}
+          ${BOY(300,335,1.05,'shout')}
+          ${WOLF(520,330,1)}
+          ${SHEEP(640,420,.8)}
+          <text x="330" y="225" font-size="30">😭</text><text x="470" y="220" font-size="28">📣</text>`)
+      },
+      {
+        text: 'เด็กเลี้ยงแกะเสียใจมากที่ทำแกะหายไปหลายตัว เขาได้เรียนรู้บทเรียนสำคัญ นิทานเรื่องนี้สอนว่า คนที่ชอบพูดโกหกบ่อยๆ พอถึงเวลาพูดความจริง ก็จะไม่มีใครเชื่ออีกต่อไป เราจึงควรเป็นคนซื่อสัตย์นะจ๊ะ',
+        art: wrap(`${SKY('#FFE1B8','#FFE8F0')}${SUN(400,100)}${CLOUD(150,140,.7)}${CLOUD(650,120,.7)}
+          ${GROUND('#9ECF92')}${TREE(90,340,.9)}${FLOWER(680,450,'#FFC93C')}
+          ${BOY(400,340,1.05,'flat')}
+          ${SHEEP(560,420,.85)}
+          <text x="360" y="235" font-size="30">💭</text><text x="430" y="235" font-size="24">🤥</text>`)
+      }
+    ]
+  },
+  {
+    id: 'ant-grasshopper',
+    title: '🐜 มดกับตั๊กแตน 🎻',
+    subtitle: 'ขยันเตรียมตัววันนี้ สบายในวันข้างหน้า',
+    cover: wrap(`${SKY('#CFF0FF','#F3FFE8')}${SUN(680,80)}${CLOUD(170,100)}
+      ${GROUND('#9BD97C')}${TREE(120,330,1,'#6DCF7C')}${FLOWER(560,450)}
+      ${ANT(300,410,1.4)}${HOPPER(480,395,1.3,true)}`),
+    scenes: [
+      {
+        text: 'ในฤดูร้อนที่แดดจ้า มดน้อยขยันขันแข็ง ช่วยกันขนเมล็ดข้าวไปเก็บไว้ในรังทีละเม็ด ทีละเม็ด ส่วนตั๊กแตนเอาแต่นั่งสีไวโอลิน ร้องเพลงเล่นอย่างสบายใจอยู่ใต้ร่มไม้',
+        art: wrap(`${SKY('#CFF0FF','#F3FFE8')}${SUN(690,80)}${CLOUD(180,100)}
+          ${GROUND('#9BD97C')}${TREE(680,320,1,'#6DCF7C')}${FLOWER(150,450,'#FFC93C')}
+          ${ANT(230,410,1.2)}${ANT(320,425,1)}${GRAIN(270,395)}${GRAIN(360,410)}
+          ${HOPPER(540,395,1.3,true)}`)
+      },
+      {
+        text: 'ตั๊กแตนหัวเราะล้อมดว่า "เจ้ามดเอ๋ย ทำงานหนักทำไมกันนะ อากาศดีขนาดนี้ มาเล่นดนตรีด้วยกันสิ!" มดยิ้มแล้วตอบว่า "ข้ากำลังเก็บอาหารไว้กินหน้าหนาวจ้ะ เธอก็ควรเตรียมไว้บ้างนะ"',
+        art: wrap(`${SKY('#FFE9C7','#F3FFE8')}${SUN(120,90)}${CLOUD(500,80,.7)}
+          ${GROUND('#A8DFA0')}${TREE(90,330,.85,'#6DCF7C')}
+          ${HOPPER(300,400,1.5,true)}
+          ${ANT(520,420,1.3)}${GRAIN(470,410)}
+          <text x="300" y="300" font-size="28">😆</text>`)
+      },
+      {
+        text: 'ตั๊กแตนไม่สนใจคำเตือน ยังเล่นดนตรีต่อไปทั้งวัน แล้วฤดูหนาวก็มาถึง หิมะโปรยปรายขาวโพลน ต้นไม้ไร้ใบ ตั๊กแตนหนาวสั่น ท้องหิวจนไม่มีแรง หาอาหารที่ไหนก็ไม่เจอเลย',
+        art: wrap(`${SKY('#8FA6D9','#D8E4F0')}${MOON(680,90)}${SNOW()}
+          <ellipse cx="400" cy="560" rx="560" ry="150" fill="#EAF2FA"/>
+          ${TREE(140,340,.9,'#CBD8E8')}${TREE(670,350,.8,'#CBD8E8')}
+          ${HOPPER(400,410,1.4)}
+          <text x="360" y="330" font-size="28">🥶</text>`)
+      },
+      {
+        text: 'ตั๊กแตนสั่นเทิ้มเดินไปเคาะประตูรังมด "ขอข้าวสักหน่อยได้ไหม ข้าหิวเหลือเกิน" มดใจดีเปิดประตูรับ แบ่งอาหารอุ่นๆ ให้ พร้อมบอกว่า "คราวหน้าอย่าลืมเตรียมตัวไว้ตั้งแต่เนิ่นๆ นะ"',
+        art: wrap(`${SKY('#7E93C9','#C9D4E8')}${MOON(120,90)}${SNOW()}
+          <ellipse cx="400" cy="560" rx="560" ry="150" fill="#EAF2FA"/>
+          ${HOUSE(560,370,'wood',.75)}
+          ${HOPPER(240,405,1.3)}
+          ${ANT(420,415,1.4)}
+          ${HEARTS(360,240)}<text x="250" y="320" font-size="24">🙏</text>`)
+      },
+      {
+        text: 'ตั๊กแตนสำนึกผิดและขอบคุณมดอย่างจริงใจ พอถึงหน้าร้อนปีต่อมา ตั๊กแตนก็ช่วยมดเก็บอาหารอย่างขยันขันแข็ง นิทานเรื่องนี้สอนว่า ยามที่เรามีเวลา ควรขยันเตรียมตัวไว้ วันนี้เหนื่อยหน่อย แต่วันข้างหน้าจะสบายจ้ะ',
+        art: wrap(`${SKY('#CFF0FF','#F3FFE8')}${SUN(400,90)}${CLOUD(150,140,.7)}${CLOUD(650,120,.7)}
+          ${GROUND('#9BD97C')}${TREE(90,340,.9,'#6DCF7C')}${FLOWER(680,450,'#FFC93C')}
+          ${ANT(300,415,1.3)}${HOPPER(470,405,1.2)}${GRAIN(390,405)}${GRAIN(360,415)}
+          <text x="360" y="235" font-size="28">🎉</text>`)
+      }
+    ]
+  },
+  {
+    id: 'fox-grapes',
+    title: '🦊 หมาจิ้งจอกกับองุ่น 🍇',
+    subtitle: 'อย่าหาข้ออ้างเมื่อเราทำไม่สำเร็จ',
+    cover: wrap(`${SKY('#CFF0FF','#F3FFE8')}${SUN(120,80)}${CLOUD(560,100)}
+      ${GROUND('#9BD97C')}${ARBOR(540,110,200)}${GRAPES(600,150,1)}${GRAPES(670,150,.95)}
+      ${FOX(280,350,1)}${FLOWER(180,450,'#FF7BAC')}`),
+    scenes: [
+      {
+        text: 'ในวันที่แดดสดใส หมาจิ้งจอกตัวหนึ่งเดินเล่นด้วยความหิวโหย ทันใดนั้นก็เหลือบไปเห็นพวงองุ่นสีม่วงสุกฉ่ำ ห้อยอยู่บนซุ้มไม้สูง น้ำลายไหลเลย "องุ่นน่ากินจังเลย ต้องอร่อยแน่ๆ!"',
+        art: wrap(`${SKY('#CFF0FF','#F3FFE8')}${SUN(690,80)}${CLOUD(170,100)}
+          ${GROUND('#9BD97C')}${TREE(90,330,.85,'#6DCF7C')}${FLOWER(200,450,'#FFC93C')}
+          ${ARBOR(540,110,210)}${GRAPES(600,152,1.05)}${GRAPES(675,152,1)}
+          ${FOX(300,350,1,'<text x="30" y="-44" font-size="30">🤤</text>')}`)
+      },
+      {
+        text: 'หมาจิ้งจอกย่อตัวลงแล้วกระโดดสุดแรง ฮุบ! แต่คว้าไม่ถึง องุ่นอยู่สูงเกินไป มันถอยหลังวิ่งแล้วกระโดดอีกครั้ง แล้วครั้งเล่า แต่ก็ยังเอื้อมไม่ถึงองุ่นสักที',
+        art: wrap(`${SKY('#FFE9C7','#F3FFE8')}${SUN(120,90)}${CLOUD(480,80,.7)}
+          ${GROUND('#A8DFA0')}
+          ${ARBOR(540,110,210)}${GRAPES(600,152,1.05)}${GRAPES(675,152,1)}
+          ${FOX(470,230,1,'<text x="-46" y="10" font-size="26">💨</text>')}
+          <text x="430" y="360" font-size="26">💨</text>`)
+      },
+      {
+        text: 'หมาจิ้งจอกกระโดดจนเหนื่อยหอบ ขาสั่น หมดแรงไปเลย ไม่ว่าจะพยายามอย่างไร ก็ไม่สามารถเก็บองุ่นพวงนั้นมากินได้ มันนั่งลงหายใจหอบแฮกๆ ด้วยความผิดหวัง',
+        art: wrap(`${SKY('#E8D8F0','#FFF0E0')}${SUN(680,90)}${CLOUD(200,100,.7)}
+          ${GROUND('#9ECF92')}
+          ${ARBOR(540,110,210)}${GRAPES(600,152,1.05)}${GRAPES(675,152,1)}
+          ${FOX(300,355,1,'<text x="32" y="-44" font-size="28">😓</text>')}
+          <text x="240" y="330" font-size="24">💦</text>`)
+      },
+      {
+        text: 'ในที่สุดหมาจิ้งจอกก็ยอมแพ้ มันสะบัดหางเดินจากไป พลางพูดเสียงดังว่า "ฮึ! องุ่นพวกนี้คงเปรี้ยวแน่ๆ ไม่กินก็ได้!" นิทานเรื่องนี้สอนว่า เมื่อเราทำอะไรไม่สำเร็จ ไม่ควรหาข้ออ้างโทษสิ่งอื่น แต่ควรยอมรับความจริงและพยายามให้มากขึ้นนะจ๊ะ',
+        art: wrap(`${SKY('#FFE1B8','#FFDFF0')}${SUN(400,90)}${CLOUD(150,140,.7)}${CLOUD(650,120,.7)}
+          ${GROUND('#9BD97C')}${TREE(710,340,.85,'#6DCF7C')}${FLOWER(160,450,'#FFC93C')}
+          ${ARBOR(560,110,200)}${GRAPES(615,152,1.05)}${GRAPES(685,152,1)}
+          <g transform="scale(-1,1) translate(-360,0)">${FOX(300,355,1)}</g>
+          <text x="240" y="290" font-size="26">💬</text><text x="150" y="330" font-size="24">🍇</text>`)
+      }
+    ]
+  },
+  {
+    id: 'crow-pitcher',
+    title: '🐦 กากับเหยือกน้ำ 🏺',
+    subtitle: 'ใช้สติปัญญาและความพยายาม ปัญหาก็แก้ได้',
+    cover: wrap(`${SKY('#BFE7FF','#FFF6E0')}${SUN(690,80)}${CLOUD(180,100)}
+      ${GROUND('#E8C97A')}${PITCHER(430,330,1.1,.7,5)}${CROW(250,340,1)}`),
+    scenes: [
+      {
+        text: 'ในวันที่อากาศร้อนอบอ้าว กาตัวหนึ่งบินหาน้ำดื่มมานานแสนนาน จนคอแห้งผาก ในที่สุดมันก็เจอเหยือกน้ำใบหนึ่งวางอยู่ "โชคดีจัง มีน้ำอยู่ในเหยือกด้วย!" กาดีใจมาก',
+        art: wrap(`${SKY('#BFE7FF','#FFF6E0')}${SUN(690,80)}${CLOUD(160,100)}${CLOUD(520,70,.7)}
+          ${GROUND('#E8C97A')}${TREE(90,320,.8,'#7BC47F')}
+          ${PITCHER(470,330,1.15,.32)}
+          ${CROW(250,345,1.05,'<text x="-4" y="-40" font-size="26">😃</text>')}`)
+      },
+      {
+        text: 'แต่พอกาเอาจะงอยปากจิ้มลงไป กลับพบว่าน้ำอยู่ก้นเหยือกลึกมาก และคอเหยือกก็แคบเกินไป ปากของกาเอื้อมไม่ถึงน้ำเลยสักนิด "ทำอย่างไรดีนะ ข้าหิวน้ำจะแย่แล้ว"',
+        art: wrap(`${SKY('#CFE8FF','#FFF6E0')}${SUN(120,90)}${CLOUD(500,80,.7)}
+          ${GROUND('#E8C97A')}
+          ${PITCHER(400,320,1.35,.28)}
+          ${CROW(560,360,1,'<text x="-4" y="-40" font-size="24">😟</text>')}
+          <text x="330" y="200" font-size="26">💧</text>`)
+      },
+      {
+        text: 'กาไม่ยอมแพ้ มันหยุดคิดหาวิธี แล้วสายตาก็เหลือบไปเห็นก้อนกรวดเล็กๆ กองอยู่ข้างๆ "อ๋อ! ข้ารู้แล้ว" กาจึงคาบก้อนกรวดหย่อนลงไปในเหยือกทีละก้อน ทีละก้อน อย่างขยันขันแข็ง',
+        art: wrap(`${SKY('#BFE7FF','#F3FFE8')}${SUN(690,90)}${CLOUD(180,90)}
+          ${GROUND('#E8C97A')}
+          ${PITCHER(420,325,1.25,.5,5)}
+          ${CROW(250,350,1.05)}
+          <circle cx="300" cy="430" r="7" fill="#9AA3AF"/><circle cx="320" cy="440" r="6" fill="#8B94A0"/><circle cx="285" cy="442" r="6" fill="#9AA3AF"/><circle cx="335" cy="432" r="5" fill="#8B94A0"/>
+          <text x="410" y="250" font-size="22">🪨</text>`)
+      },
+      {
+        text: 'ก้อนกรวดค่อยๆ ทำให้ระดับน้ำสูงขึ้น สูงขึ้น จนถึงปากเหยือกพอดี! กาก็ดื่มน้ำเย็นชื่นใจได้สำเร็จ นิทานเรื่องนี้สอนว่า เมื่อเจอปัญหา อย่าเพิ่งยอมแพ้ ถ้าเราใช้สติปัญญาและความพยายาม ก็จะหาทางออกได้เสมอจ้ะ',
+        art: wrap(`${SKY('#CFF0FF','#F3FFE8')}${SUN(400,90)}${CLOUD(150,140,.7)}${CLOUD(650,120,.7)}
+          ${GROUND('#E8C97A')}${TREE(710,320,.8,'#7BC47F')}${FLOWER(170,450,'#FF7BAC')}
+          ${PITCHER(430,325,1.3,.92,9)}
+          ${CROW(250,350,1.1,'<text x="-4" y="-42" font-size="26">😋</text>')}
+          <text x="360" y="215" font-size="26">✨</text>`)
+      }
+    ]
+  },
+  {
+    id: 'dog-reflection',
+    title: '🐕 สุนัขกับเงาในน้ำ 🦴',
+    subtitle: 'ความโลภทำให้เสียสิ่งที่มีอยู่',
+    cover: wrap(`${SKY('#BFE7FF','#EAF6FF')}${SUN(690,80)}${CLOUD(180,100)}
+      ${GROUND('#8FD694')}${STREAM('#8FD0F0')}${BRIDGE(400,300,1)}
+      ${DOG(400,230,1,true)}`),
+    scenes: [
+      {
+        text: 'สุนัขตัวหนึ่งโชคดี ได้กระดูกชิ้นใหญ่มาหนึ่งชิ้น มันคาบกระดูกไว้แน่นด้วยความดีใจ กระดิกหางไปมา แล้วเดินกลับบ้าน ผ่านสะพานไม้เล็กๆ ที่ทอดข้ามลำธารใสเย็น',
+        art: wrap(`${SKY('#BFE7FF','#EAF6FF')}${SUN(690,80)}${CLOUD(160,100)}${CLOUD(520,70,.7)}
+          ${GROUND('#8FD694')}${TREE(90,320,.8,'#6DCF7C')}${STREAM('#8FD0F0')}${BRIDGE(400,300,1)}
+          ${DOG(400,232,1,true,'<text x="34" y="-42" font-size="28">😄</text>')}`)
+      },
+      {
+        text: 'ขณะเดินอยู่กลางสะพาน สุนัขก้มมองลงไปในน้ำ ก็เห็นสุนัขอีกตัวหนึ่งกำลังคาบกระดูกชิ้นโตอยู่เหมือนกัน! (ที่จริงมันคือเงาสะท้อนของตัวเองในน้ำ แต่สุนัขไม่รู้เลย)',
+        art: wrap(`${SKY('#CFE8FF','#EAF6FF')}${SUN(120,90)}${CLOUD(500,80,.7)}
+          ${GROUND('#8FD694')}${STREAM('#7FC6EC')}${BRIDGE(400,290,1)}
+          ${DOG(400,222,1,true,'<text x="34" y="-42" font-size="26">👀</text>')}
+          <g opacity=".4" transform="translate(400,470) scale(1,-0.5)">${DOG(0,222,1,true)}</g>
+          <text x="500" y="420" font-size="24">〰️</text>`)
+      },
+      {
+        text: 'สุนัขเกิดความโลภ อยากได้กระดูกชิ้นที่ใหญ่กว่าของสุนัขในน้ำ มันจึงอ้าปากเห่า "โฮ่ง! เอากระดูกมานะ!" แต่พออ้าปาก กระดูกชิ้นที่คาบอยู่ก็หล่นตกลงไปในน้ำ จ๋อม! จมหายไปเลย',
+        art: wrap(`${SKY('#D8C4E8','#EAF6FF')}${CLOUD(150,80,.7)}${CLOUD(560,100,.7)}
+          ${GROUND('#8FB582')}${STREAM('#6FB8E4')}${BRIDGE(400,290,1)}
+          ${DOG(400,222,1,false,'<text x="34" y="-42" font-size="26">😲</text>')}
+          ${BONE(400,400,.85)}
+          <text x="360" y="440" font-size="30">💦</text>`)
+      },
+      {
+        text: 'สุนัขมองน้ำด้วยความเสียใจ กระดูกในน้ำก็หายไป กระดูกของตัวเองก็จมน้ำไปแล้ว สุดท้ายอดกินทั้งสองชิ้น นิทานเรื่องนี้สอนว่า ความโลภอยากได้ของคนอื่น อาจทำให้เราเสียสิ่งที่มีอยู่ไป จงพอใจในสิ่งที่ตนมีนะจ๊ะ',
+        art: wrap(`${SKY('#FFE1B8','#EAF6FF')}${SUN(400,90)}${CLOUD(150,140,.7)}${CLOUD(650,120,.7)}
+          ${GROUND('#8FD694')}${TREE(710,320,.8,'#6DCF7C')}${STREAM('#8FD0F0')}${BRIDGE(400,300,1)}
+          ${DOG(400,232,1,false,'<text x="34" y="-42" font-size="28">😞</text>')}
+          <text x="330" y="440" font-size="24">〰️</text><text x="470" y="435" font-size="20">💧</text>`)
+      }
+    ]
+  }
+];
+
+/* ============================================================
+   Text-to-Speech (Thai)
+   ============================================================ */
+const synth = window.speechSynthesis;
+let thaiVoice = null;
+let speaking = false;
+
+function pickVoice() {
+  const voices = synth ? synth.getVoices() : [];
+  thaiVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('th')) || null;
+  document.getElementById('noVoiceNote').style.display =
+    (synth && voices.length > 0 && !thaiVoice) ? 'block' : 'none';
+}
+if (synth) {
+  pickVoice();
+  synth.onvoiceschanged = pickVoice;
+}
+
+let boundaryFired = false;
+let fallbackTimers = [];
+let speakSession = 0;   // กันไม่ให้ event ของเสียงเก่าที่ถูกยกเลิก มาล้างสถานะของเสียงใหม่
+
+function clearFallback() {
+  fallbackTimers.forEach(t => clearTimeout(t));
+  fallbackTimers = [];
+}
+
+// เดินไฮไลต์ตามเวลา (ใช้เมื่อเสียงไม่ส่ง event บอกตำแหน่งคำ เช่นเสียงไทยบน macOS)
+function startFallbackHighlight(text, rate) {
+  clearFallback();
+  const msPerChar = 90 / rate;          // ประมาณความเร็วอ่านไทย
+  let acc = 0;
+  tokenSpans.forEach((tok, i) => {
+    const at = acc;
+    fallbackTimers.push(setTimeout(() => {
+      if (!boundaryFired) highlightAt(tok.start);
+    }, at));
+    acc += (tok.end - tok.start) * msPerChar + 90;   // + ช่วงเว้นวรรคเล็กน้อย
+  });
+}
+
+function speak(text, onDone) {
+  if (!synth) { if (onDone) onDone(); return; }
+  const mySession = ++speakSession;   // เลขประจำรอบนี้
+  synth.cancel();                      // event ของเสียงเก่าจะเช็ค session แล้วไม่ทำอะไร
+  clearFallback();
+  boundaryFired = false;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'th-TH';
+  if (thaiVoice) u.voice = thaiVoice;
+  u.rate = 0.92;   // ช้าลงนิดให้เด็กฟังทัน
+  u.pitch = 1.12;  // เสียงสดใส
+  u.onboundary = (e) => {
+    if (mySession !== speakSession) return;
+    if (e.name && e.name !== 'word' && e.name !== 'sentence') return;
+    boundaryFired = true;   // เสียงส่งตำแหน่งจริง → เลิกใช้ตัวจับเวลา
+    clearFallback();
+    highlightAt(e.charIndex);
+  };
+  u.onend = () => {
+    if (mySession !== speakSession) return;
+    clearFallback(); clearHighlight(); setSpeaking(false); if (onDone) onDone();
+  };
+  u.onerror = () => {
+    if (mySession !== speakSession) return;
+    clearFallback(); clearHighlight(); setSpeaking(false);
+  };
+  setSpeaking(true);
+  synth.speak(u);
+  startFallbackHighlight(text, u.rate);
+}
+
+function stopSpeak() {
+  speakSession++;   // ทำให้ event ที่ค้างอยู่เป็นโมฆะ
+  if (synth) synth.cancel();
+  clearFallback();
+  clearHighlight();
+  setSpeaking(false);
+}
+
+/* ---------- read-along word highlight ---------- */
+let tokenSpans = [];
+
+function renderText(text) {
+  const box = $('sceneText');
+  box.textContent = '';
+  tokenSpans = [];
+  let idx = 0;
+  text.split(/(\s+)/).forEach(part => {
+    if (part === '') return;
+    if (/^\s+$/.test(part)) {
+      box.appendChild(document.createTextNode(part));
+    } else {
+      const span = document.createElement('span');
+      span.className = 'w';
+      span.textContent = part;
+      box.appendChild(span);
+      tokenSpans.push({ start: idx, end: idx + part.length, el: span });
+    }
+    idx += part.length;
+  });
+}
+
+function highlightAt(ci) {
+  tokenSpans.forEach(t => t.el.classList.toggle('on', ci >= t.start && ci < t.end));
+}
+
+function clearHighlight() {
+  tokenSpans.forEach(t => t.el.classList.remove('on'));
+}
+
+function setSpeaking(on) {
+  speaking = on;
+  document.getElementById('sceneArt').classList.toggle('speaking', on);
+  document.getElementById('sceneText').classList.toggle('speaking', on);
+  document.getElementById('playBtn').innerHTML = on ? '⏸️ หยุดก่อน' : '▶️ ฟังนิทาน';
+  document.getElementById('tapHint').textContent = on ? '🔊 กำลังเล่า...' : '👆 แตะเพื่อฟัง';
+}
+
+/* ============================================================
+   App state & rendering
+   ============================================================ */
+let currentStory = null;
+let sceneIndex = 0;
+
+const $ = id => document.getElementById(id);
+
+function renderPicker() {
+  const grid = $('storyGrid');
+  grid.innerHTML = '';
+  STORIES.forEach(story => {
+    const card = document.createElement('div');
+    card.className = 'story-card';
+    card.tabIndex = 0;
+    card.innerHTML = `
+      <div class="cover">${story.cover}</div>
+      <div class="info">
+        <h2>${story.title}</h2>
+        <p>${story.subtitle}</p>
+        <span class="play-hint">📖 อ่านเลย!</span>
+      </div>`;
+    const open = () => openStory(story);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
+    grid.appendChild(card);
+  });
+}
+
+function openStory(story) {
+  currentStory = story;
+  sceneIndex = 0;
+  $('picker').classList.add('hidden');
+  $('reader').classList.add('active');
+  $('storyTitle').textContent = story.title;
+  renderScene(true);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeStory() {
+  stopSpeak();
+  $('autoPlay').checked = false;
+  $('reader').classList.remove('active');
+  $('picker').classList.remove('hidden');
+  $('theEnd').classList.remove('show');
+  currentStory = null;
+}
+
+function renderScene(autoSpeak = false) {
+  const scene = currentStory.scenes[sceneIndex];
+  const total = currentStory.scenes.length;
+
+  $('sceneSvg').innerHTML = scene.art;
+  renderText(scene.text);
+  $('sceneCounter').textContent = `ฉากที่ ${sceneIndex + 1} จาก ${total}`;
+  $('prevBtn').disabled = sceneIndex === 0;
+  $('nextBtn').disabled = sceneIndex === total - 1;
+  $('theEnd').classList.remove('show');
+
+  const dots = $('dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === sceneIndex ? ' current' : i < sceneIndex ? ' done' : '');
+    d.setAttribute('aria-label', `ไปฉากที่ ${i + 1}`);
+    d.addEventListener('click', () => { stopSpeak(); sceneIndex = i; renderScene(true); });
+    dots.appendChild(d);
+  }
+
+  document.querySelector('.scene-stage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (autoSpeak) speakScene();
+}
+
+function speakScene() {
+  const scene = currentStory.scenes[sceneIndex];
+  const isLast = sceneIndex === currentStory.scenes.length - 1;
+  speak(scene.text, () => {
+    if (isLast) {
+      celebrate();
+    } else if ($('autoPlay').checked && currentStory) {
+      setTimeout(() => {
+        if (currentStory && $('autoPlay').checked) { sceneIndex++; renderScene(true); }
+      }, 900);
+    }
+  });
+}
+
+function celebrate() {
+  $('theEnd').classList.add('show');
+  const colors = ['#FF7BAC', '#FFC93C', '#4ECDC4', '#7C5CE0', '#FF9F5A'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    const size = 8 + Math.random() * 8;
+    c.style.cssText = `left:${Math.random() * 100}vw; width:${size}px; height:${size * 0.6}px;
+      background:${colors[i % colors.length]}; border-radius:${Math.random() > .5 ? '50%' : '3px'};
+      animation-duration:${2.5 + Math.random() * 2}s; animation-delay:${Math.random() * .8}s;`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 6000);
+  }
+}
+
+/* ---------- events ---------- */
+$('backBtn').addEventListener('click', closeStory);
+$('prevBtn').addEventListener('click', () => { stopSpeak(); sceneIndex--; renderScene(true); });
+$('nextBtn').addEventListener('click', () => { stopSpeak(); sceneIndex++; renderScene(true); });
+$('playBtn').addEventListener('click', () => speaking ? stopSpeak() : speakScene());
+$('sceneArt').addEventListener('click', () => speaking ? stopSpeak() : speakScene());
+$('sceneArt').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); speaking ? stopSpeak() : speakScene(); }
+});
+
+/* ---------- background bubbles ---------- */
+(function makeBubbles() {
+  const wrap = $('bubbles');
+  const colors = ['#FF7BAC', '#FFC93C', '#4ECDC4', '#7C5CE0', '#FF9F5A'];
+  for (let i = 0; i < 14; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 40 + Math.random() * 90;
+    b.style.cssText = `width:${size}px; height:${size}px; background:${colors[i % colors.length]};
+      left:${Math.random() * 100}%; top:${Math.random() * 100}%;
+      animation-duration:${8 + Math.random() * 8}s; animation-delay:${Math.random() * 5}s;`;
+    wrap.appendChild(b);
+  }
+})();
+
+renderPicker();
+</script>
+</body>
+</html>
