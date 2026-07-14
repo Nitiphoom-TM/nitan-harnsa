@@ -1,0 +1,20 @@
+{
+  "name": "นิทานหรรษา",
+  "short_name": "นิทานหรรษา",
+  "description": "เว็บเล่านิทานสำหรับเด็ก มีเสียง AI เล่าเรื่องภาษาไทย ภาพประกอบสดใส แตะแต่ละฉากเพื่อฟังได้เอง",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF7E8",
+  "theme_color": "#7C5CE0",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

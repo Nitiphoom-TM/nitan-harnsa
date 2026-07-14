@@ -1,0 +1,38 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE9B8"/><stop offset="1" stop-color="#FFD1E8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- rainbow -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M 112 286 A 144 144 0 0 1 400 286" stroke="#FF6B6B" stroke-width="27"/>
+    <path d="M 146 286 A 110 110 0 0 1 366 286" stroke="#FF9F5A" stroke-width="27"/>
+    <path d="M 180 286 A 76 76 0 0 1 332 286" stroke="#FFC93C" stroke-width="27"/>
+    <path d="M 214 286 A 42 42 0 0 1 298 286" stroke="#4ECDC4" stroke-width="27"/>
+  </g>
+
+  <!-- clouds at rainbow ends -->
+  <g fill="#ffffff">
+    <ellipse cx="112" cy="292" rx="48" ry="30"/>
+    <ellipse cx="400" cy="292" rx="48" ry="30"/>
+  </g>
+
+  <!-- open book -->
+  <g>
+    <path d="M 256 350 C 220 326 152 326 118 342 L 118 452 C 152 436 220 436 256 460 Z" fill="#ffffff" stroke="#7C5CE0" stroke-width="9"/>
+    <path d="M 256 350 C 292 326 360 326 394 342 L 394 452 C 360 436 292 436 256 460 Z" fill="#ffffff" stroke="#7C5CE0" stroke-width="9"/>
+    <line x1="256" y1="350" x2="256" y2="460" stroke="#7C5CE0" stroke-width="9"/>
+    <g stroke="#E4DAF4" stroke-width="7" stroke-linecap="round">
+      <line x1="150" y1="366" x2="226" y2="378"/>
+      <line x1="150" y1="388" x2="226" y2="400"/>
+      <line x1="286" y1="378" x2="362" y2="366"/>
+      <line x1="286" y1="400" x2="362" y2="388"/>
+    </g>
+  </g>
+
+  <!-- little star sparkle -->
+  <path d="M 256 300 l 9 20 22 3 -16 15 4 22 -19 -11 -19 11 4 -22 -16 -15 22 -3 z" fill="#FFC93C" stroke="#F2A93C" stroke-width="3" stroke-linejoin="round"/>
+</svg>
