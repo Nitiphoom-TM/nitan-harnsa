@@ -180,6 +180,27 @@
   }
   .auto-toggle input { width: 22px; height: 22px; accent-color: var(--purple); cursor: pointer; }
 
+  /* ---------- speed control ---------- */
+  .speed-row {
+    display: flex; justify-content: center; align-items: center; gap: 12px;
+    margin-top: 16px; flex-wrap: wrap;
+  }
+  .speed-label { font-weight: 700; color: #8a7ba0; font-size: 1rem; }
+  .speed-seg {
+    display: inline-flex; background: #fff; border-radius: 999px; padding: 5px;
+    box-shadow: 0 4px 14px rgba(124,92,224,.12); gap: 4px;
+  }
+  .speed-seg button {
+    font-family: inherit; font-weight: 800; font-size: 1rem; cursor: pointer;
+    border: none; background: transparent; color: #9187a5;
+    padding: 8px 16px; border-radius: 999px; transition: all .18s ease;
+  }
+  .speed-seg button:hover { background: #F3EEFB; }
+  .speed-seg button.active {
+    background: linear-gradient(135deg, var(--green), #38b6ab); color: #fff;
+    box-shadow: 0 3px 8px rgba(78,205,196,.4);
+  }
+
   /* ---------- celebration ---------- */
   .confetti-piece {
     position: fixed; top: -20px; z-index: 50; pointer-events: none;
@@ -238,6 +259,15 @@
     </div>
 
     <div class="dots" id="dots"></div>
+
+    <div class="speed-row">
+      <span class="speed-label">⚡ ความเร็ว</span>
+      <div class="speed-seg" id="speedSeg">
+        <button type="button" data-rate="0.8">🐢 ช้า</button>
+        <button type="button" data-rate="1" class="active">🙂 ปกติ</button>
+        <button type="button" data-rate="1.25">🐇 เร็ว</button>
+      </div>
+    </div>
 
     <div class="auto-row">
       <label class="auto-toggle">
@@ -998,75 +1028,174 @@ if (synth) {
   synth.onvoiceschanged = pickVoice;
 }
 
-let boundaryFired = false;
 let fallbackTimers = [];
-let speakSession = 0;   // กันไม่ให้ event ของเสียงเก่าที่ถูกยกเลิก มาล้างสถานะของเสียงใหม่
+let speakSession = 0;    // กันไม่ให้ event ของเสียงเก่ามาล้างสถานะของเสียงใหม่
+let currentAudio = null; // ไฟล์เสียง Edge Neural ที่กำลังเล่น
+let currentRate = 1.0;   // ความเร็วที่ผู้ใช้เลือก
+let highlightRAF = null;
+
+const AUDIO_BASE = 'audio/';
+function audioUrl() { return `${AUDIO_BASE}${currentStory.id}-${sceneIndex}.mp3`; }
+
+function isPlaying() {
+  return (currentAudio && !currentAudio.paused && !currentAudio.ended)
+      || (synth && synth.speaking && !synth.paused);
+}
+function isPaused() {
+  return (currentAudio && currentAudio.paused && currentAudio.currentTime > 0 && !currentAudio.ended)
+      || (synth && synth.paused);
+}
+
+/* ---------- ไฮไลต์อ่านตาม: อิงเวลาเล่นจริงของไฟล์เสียง ---------- */
+function stopHighlightLoop() {
+  if (highlightRAF) { cancelAnimationFrame(highlightRAF); highlightRAF = null; }
+}
+function startHighlightLoop(audio, session) {
+  stopHighlightLoop();
+  const tick = () => {
+    if (session !== speakSession || !audio) return;
+    if (audio.duration) {
+      const frac = Math.min(audio.currentTime / audio.duration, 1);
+      const pos = frac * textLen;
+      let idx = -1;
+      for (let i = 0; i < tokenSpans.length; i++) {
+        if (pos >= tokenSpans[i].start && pos < tokenSpans[i].end) { idx = i; break; }
+      }
+      if (idx < 0 && frac >= 0.999) idx = tokenSpans.length - 1;
+      tokenSpans.forEach((t, i) => t.el.classList.toggle('on', i === idx));
+    }
+    if (!audio.ended && session === speakSession) highlightRAF = requestAnimationFrame(tick);
+  };
+  highlightRAF = requestAnimationFrame(tick);
+}
+
+/* ---------- เล่นเสียงหลัก: ไฟล์ Edge Neural แล้ว fallback เป็นเสียงในเครื่อง ---------- */
+function speak(text, onDone) {
+  const mySession = ++speakSession;
+  stopAudioOnly();
+  clearFallback();
+  clearHighlight();
+  setSpeaking(true);
+  $('tapHint').textContent = '⏳ กำลังโหลดเสียง...';
+
+  const audio = new Audio(audioUrl());
+  audio.playbackRate = currentRate;
+  audio.preservesPitch = true;
+  audio.mozPreservesPitch = true;
+  audio.webkitPreservesPitch = true;
+  currentAudio = audio;
+
+  audio.addEventListener('playing', () => {
+    if (mySession !== speakSession) return;
+    setSpeaking(true);
+    $('tapHint').textContent = '🔊 กำลังเล่า...';
+    startHighlightLoop(audio, mySession);
+  });
+  audio.addEventListener('ended', () => {
+    if (mySession !== speakSession) return;
+    stopHighlightLoop(); clearHighlight(); currentAudio = null; setSpeaking(false);
+    if (onDone) onDone();
+  });
+  audio.addEventListener('error', () => {
+    if (mySession !== speakSession) return;
+    currentAudio = null;
+    webSpeak(text, mySession, onDone);   // โหลดไฟล์เสียงไม่ได้ → ใช้เสียงในเครื่อง
+  });
+
+  audio.play().catch(() => {
+    if (mySession !== speakSession || !currentAudio) return;
+    currentAudio = null;
+    webSpeak(text, mySession, onDone);   // เล่นอัตโนมัติถูกบล็อก → ใช้เสียงในเครื่อง
+  });
+}
+
+/* ---------- เสียงสำรองในเครื่อง (Web Speech) ---------- */
+function webSpeak(text, mySession, onDone) {
+  if (!synth) { if (mySession === speakSession) { setSpeaking(false); if (onDone) onDone(); } return; }
+  synth.cancel();
+  clearFallback();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'th-TH';
+  if (thaiVoice) u.voice = thaiVoice;
+  u.rate = 0.92 * currentRate;
+  u.pitch = 1.12;
+  u.onend = () => { if (mySession !== speakSession) return; clearFallback(); clearHighlight(); setSpeaking(false); if (onDone) onDone(); };
+  u.onerror = () => { if (mySession !== speakSession) return; clearFallback(); clearHighlight(); setSpeaking(false); };
+  setSpeaking(true);
+  $('tapHint').textContent = '🔊 กำลังเล่า...';
+  synth.speak(u);
+  startFallbackHighlight(text, u.rate);
+}
 
 function clearFallback() {
   fallbackTimers.forEach(t => clearTimeout(t));
   fallbackTimers = [];
 }
 
-// เดินไฮไลต์ตามเวลา (ใช้เมื่อเสียงไม่ส่ง event บอกตำแหน่งคำ เช่นเสียงไทยบน macOS)
+// ไฮไลต์แบบประมาณเวลา (เฉพาะตอน fallback ใช้เสียงในเครื่อง)
 function startFallbackHighlight(text, rate) {
   clearFallback();
-  const msPerChar = 90 / rate;          // ประมาณความเร็วอ่านไทย
+  const msPerChar = 90 / rate;
   let acc = 0;
-  tokenSpans.forEach((tok, i) => {
+  tokenSpans.forEach((tok) => {
     const at = acc;
-    fallbackTimers.push(setTimeout(() => {
-      if (!boundaryFired) highlightAt(tok.start);
-    }, at));
-    acc += (tok.end - tok.start) * msPerChar + 90;   // + ช่วงเว้นวรรคเล็กน้อย
+    fallbackTimers.push(setTimeout(() => highlightAt(tok.start), at));
+    acc += (tok.end - tok.start) * msPerChar + 90;
   });
 }
 
-function speak(text, onDone) {
-  if (!synth) { if (onDone) onDone(); return; }
-  const mySession = ++speakSession;   // เลขประจำรอบนี้
-  synth.cancel();                      // event ของเสียงเก่าจะเช็ค session แล้วไม่ทำอะไร
-  clearFallback();
-  boundaryFired = false;
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'th-TH';
-  if (thaiVoice) u.voice = thaiVoice;
-  u.rate = 0.92;   // ช้าลงนิดให้เด็กฟังทัน
-  u.pitch = 1.12;  // เสียงสดใส
-  u.onboundary = (e) => {
-    if (mySession !== speakSession) return;
-    if (e.name && e.name !== 'word' && e.name !== 'sentence') return;
-    boundaryFired = true;   // เสียงส่งตำแหน่งจริง → เลิกใช้ตัวจับเวลา
-    clearFallback();
-    highlightAt(e.charIndex);
-  };
-  u.onend = () => {
-    if (mySession !== speakSession) return;
-    clearFallback(); clearHighlight(); setSpeaking(false); if (onDone) onDone();
-  };
-  u.onerror = () => {
-    if (mySession !== speakSession) return;
-    clearFallback(); clearHighlight(); setSpeaking(false);
-  };
-  setSpeaking(true);
-  synth.speak(u);
-  startFallbackHighlight(text, u.rate);
+function stopAudioOnly() {
+  if (currentAudio) { currentAudio.pause(); currentAudio.removeAttribute('src'); currentAudio.load(); currentAudio = null; }
+  stopHighlightLoop();
+  if (synth) synth.cancel();
 }
 
 function stopSpeak() {
-  speakSession++;   // ทำให้ event ที่ค้างอยู่เป็นโมฆะ
-  if (synth) synth.cancel();
+  speakSession++;
+  stopAudioOnly();
   clearFallback();
   clearHighlight();
   setSpeaking(false);
 }
 
+/* ---------- หยุดชั่วคราว / เล่นต่อ ---------- */
+function pauseNarration() {
+  if (currentAudio && !currentAudio.paused) { currentAudio.pause(); stopHighlightLoop(); }
+  else if (synth && synth.speaking) { synth.pause(); }
+  setSpeaking(false);
+  $('tapHint').textContent = '⏸️ หยุดไว้ก่อน';
+}
+function resumeNarration() {
+  if (currentAudio && currentAudio.paused) { currentAudio.play(); }        // 'playing' จะจัดการไฮไลต์ต่อเอง
+  else if (synth && synth.paused) { synth.resume(); setSpeaking(true); }
+  else { speakScene(); }
+}
+function togglePlay() {
+  if (isPlaying()) pauseNarration();
+  else if (isPaused()) resumeNarration();
+  else speakScene();
+}
+
+/* ---------- ปรับความเร็ว ---------- */
+function setRate(r) {
+  currentRate = r;
+  [...$('speedSeg').children].forEach(b => b.classList.toggle('active', parseFloat(b.dataset.rate) === r));
+  if (currentAudio) {
+    currentAudio.playbackRate = r;                 // เปลี่ยนสดได้ทันที คงระดับเสียงไว้
+  } else if (synth && (synth.speaking || synth.paused)) {
+    stopSpeak(); speakScene();                      // เสียงในเครื่องเปลี่ยนกลางคันไม่ได้ → เริ่มใหม่
+  }
+}
+
 /* ---------- read-along word highlight ---------- */
 let tokenSpans = [];
+let textLen = 1;
 
 function renderText(text) {
   const box = $('sceneText');
   box.textContent = '';
   tokenSpans = [];
+  textLen = text.length || 1;
   let idx = 0;
   text.split(/(\s+)/).forEach(part => {
     if (part === '') return;
@@ -1205,10 +1334,14 @@ function celebrate() {
 $('backBtn').addEventListener('click', closeStory);
 $('prevBtn').addEventListener('click', () => { stopSpeak(); sceneIndex--; renderScene(true); });
 $('nextBtn').addEventListener('click', () => { stopSpeak(); sceneIndex++; renderScene(true); });
-$('playBtn').addEventListener('click', () => speaking ? stopSpeak() : speakScene());
-$('sceneArt').addEventListener('click', () => speaking ? stopSpeak() : speakScene());
+$('playBtn').addEventListener('click', togglePlay);
+$('sceneArt').addEventListener('click', togglePlay);
 $('sceneArt').addEventListener('keydown', e => {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); speaking ? stopSpeak() : speakScene(); }
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePlay(); }
+});
+$('speedSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-rate]');
+  if (btn) setRate(parseFloat(btn.dataset.rate));
 });
 
 /* ---------- background bubbles ---------- */
